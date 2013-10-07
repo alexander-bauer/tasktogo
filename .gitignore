@@ -1,3 +1,10 @@
+# Specific binary
+tasktogo
+
+# Temporary files and backups
+*#*
+*~
+
 # Compiled Object files, Static and Dynamic libs (Shared Objects)
 *.o
 *.a
