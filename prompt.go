@@ -12,14 +12,8 @@ const (
 )
 
 var (
-	PrimaryMap = map[string]int{
-		"help": 1,
-	}
-)
-
-var (
 	ErrNoArguments    = errors.New("no arguments given")
-	ErrUnknownPrimary = errors.New("unknown command")
+	ErrUnknownCommand = errors.New("unknown command")
 )
 
 // Prompt writes a prompt to the screen and reads the Input stream
@@ -52,12 +46,12 @@ func Prompt(ctx *Context) (cmd *Command, err error) {
 	// Initialize the Command that will be returned.
 	cmd = &Command{}
 
-	// Check for the existence of the primary command, and return an
+	// Check for the existence of the matching function, and return an
 	// error if it's not found.
 	var ok bool
-	cmd.Primary, ok = PrimaryMap[strings.ToLower(inArgs[0])]
+	cmd.Run, ok = RunMap[strings.ToLower(inArgs[0])]
 	if !ok {
-		return cmd, ErrUnknownPrimary
+		return cmd, ErrUnknownCommand
 	}
 
 	cmd.Args = inArgs[1:]

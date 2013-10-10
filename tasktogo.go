@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"fmt"
 	"github.com/golang/glog"
 	"io"
 	"os"
@@ -24,21 +23,7 @@ type Context struct {
 	Output, Prompt io.Writer
 }
 
-type Command struct {
-	// Primary is the basic determinant of where commands should be
-	// routed, and can be abbreviated, and therefore is referred to by
-	// ID.
-	Primary int
-
-	// Args is a list of the remaining arguments (not including the
-	// Primary), separated by spaces, obeying quotes, double quotes,
-	// and backslashes.
-	Args []string
-}
-
 func main() {
-	fmt.Printf("TaskToGo version %s\n", Version)
-
 	// Set up a basic context. In the future, this could be determined
 	// by flags.
 	ctx := &Context{
@@ -58,21 +43,32 @@ func main() {
 			// Print a final newline before exiting, however, so that
 			// the shell prompt isn't affected.
 			writePrompt(ctx, "\n")
+
+			// Ensure that log data is written before exiting.
+			glog.Flush()
 			os.Exit(0)
 		} else if err != nil && cmd == nil {
 			// If the error was not graceful and cannot be recovered
 			// from, exit fatally.
-			glog.Fatalf("Error: %s\n", err)
 			writePrompt(ctx, "Fatal error: %s\n", err)
+
+			// Ensure that log data is written before exiting.
+			glog.Flush()
+			glog.Fatalf("Error: %s\n", err)
 		} else if err != nil {
 			// If the error was user-related, as implied by cmd not
 			// being nil, just log and output the error.
-			glog.Warningf("User error: %s\n", err)
 			writePrompt(ctx, "Error: %s\n", err)
+			glog.Warningf("User error: %s\n", err)
 		}
 
-		// Next, just log the command, because there isn't code to do
-		// anything yet.
-		glog.V(2).Infof("User command %d: %s\n", cmd.Primary, cmd.Args)
+		err = cmd.Run(cmd, ctx)
+		if err != nil {
+			writePrompt(ctx, "Error: %s\n", err)
+			glog.Warningf("Error in command: %s\n", err)
+		}
 	}
+
+	// Ensure that log data is written.
+	glog.Flush()
 }
