@@ -2,13 +2,37 @@ package main
 
 import (
 	"bufio"
+	"fmt"
 	"github.com/golang/glog"
 	"io"
 	"os"
+	"os/user"
+	"path"
 )
 
 var (
 	Version = "0"
+
+	// DefaultListLocation is the location of the default task list,
+	// which is ".tasktogo" in at the user's home directory. Getting
+	// that in the var declaration requires a function call to wrap
+	// os/user.Current().HomeDir
+	DefaultListLocation = path.Join(
+		func() string {
+			user, err := user.Current()
+			if err != nil {
+				glog.Warningf("Could not get current user: %s\n", err)
+				return "."
+			}
+
+			if user.HomeDir == "" {
+				glog.Warningf("Could not get user's homedir: %s\n", err)
+				return "."
+			}
+
+			return user.HomeDir
+		}(),
+		".tasktogo")
 )
 
 type Context struct {
@@ -21,6 +45,11 @@ type Context struct {
 	// contain the prompt unless another io.Writer is specified as the
 	// Prompt output.
 	Output, Prompt io.Writer
+
+	// List is task List that contains all known tasks and associated
+	// data.
+	// TODO: ensure that it is sorted
+	List
 }
 
 func main() {
@@ -29,6 +58,23 @@ func main() {
 	ctx := &Context{
 		Input:  bufio.NewReader(os.Stdin),
 		Output: os.Stdout,
+	}
+
+	// Attempt to load default task list.
+	f, err := os.Open(DefaultListLocation)
+	if err != nil {
+		msg := fmt.Sprintf("Could not open task list %q: %s\n",
+			DefaultListLocation, err)
+		glog.Error(msg)
+		writePrompt(ctx, msg)
+	} else {
+		ctx.List, err = ReadList(f)
+		if err != nil {
+			msg := fmt.Sprintf("Could not decode task list %q: %s\n",
+				DefaultListLocation, err)
+			glog.Error(msg)
+			writePrompt(ctx, msg)
+		}
 	}
 
 	for {
