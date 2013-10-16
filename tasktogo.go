@@ -33,6 +33,9 @@ var (
 			return user.HomeDir
 		}(),
 		".tasktogo")
+
+	// Ctx is the global context.
+	Ctx *Context
 )
 
 type Context struct {
@@ -50,28 +53,60 @@ type Context struct {
 	// data.
 	// TODO: ensure that it is sorted
 	List
+
+	// loadpath is the path on the filesystem from which the List was
+	// loaded.
+	loadpath string
+
+	// modified is a flag which implies that the List should be saved
+	// to its file before exiting.
+	modified bool
+}
+
+func (ctx *Context) Save() {
+	// Only attempt to save if the List has been modified.
+	if ctx.modified {
+		err := ctx.List.WriteFile(ctx.loadpath)
+		if err != nil {
+			glog.Errorf("Could not save list: %s\n", err)
+		} else {
+			glog.V(1).Infof("List saved to %q\n", ctx.loadpath)
+		}
+	}
+}
+
+// exit performs cleanup tasks and exits with the given status code.
+func exit(status int) {
+	// Save the global context if necessary.
+	Ctx.Save()
+
+	glog.Flush()
+	os.Exit(status)
 }
 
 func main() {
 	// Set up a basic context. In the future, this could be determined
 	// by flags.
-	ctx := &Context{
+	Ctx = &Context{
 		Input:  bufio.NewReader(os.Stdin),
 		Output: os.Stdout,
 	}
 
 	// Attempt to load default task list.
 	var err error
-	ctx.List, err = ReadListFile(DefaultListLocation)
+	Ctx.List, err = ReadListFile(DefaultListLocation)
 	if err != nil {
 		msg := fmt.Sprintf("Could not read task list: %s\n", err)
 		glog.Error(msg)
-		writePrompt(ctx, msg)
+		writePrompt(Ctx, msg)
+	} else {
+		// If there were no errors, record information in the context.
+		Ctx.loadpath = DefaultListLocation
 	}
 
 	for {
 		// Print the prompt once, and get any errors.
-		cmd, err := Prompt(ctx)
+		cmd, err := Prompt(Ctx)
 
 		if err == io.EOF {
 			// If we encounter a graceful EOF, then we must exit
@@ -80,15 +115,14 @@ func main() {
 
 			// Print a final newline before exiting, however, so that
 			// the shell prompt isn't affected.
-			writePrompt(ctx, "\n")
+			writePrompt(Ctx, "\n")
 
-			// Ensure that log data is written before exiting.
-			glog.Flush()
-			os.Exit(0)
+			// Exit gracefully.
+			exit(0)
 		} else if err != nil && cmd == nil {
 			// If the error was not graceful and cannot be recovered
 			// from, exit fatally.
-			writePrompt(ctx, "Fatal error: %s\n", err)
+			writePrompt(Ctx, "Fatal error: %s\n", err)
 
 			// Ensure that log data is written before exiting.
 			glog.Flush()
@@ -97,18 +131,17 @@ func main() {
 			// If the error was user-related, as implied by cmd not
 			// being nil, log and output the error, and start from the
 			// beginning of the loop.
-			writePrompt(ctx, "Error: %s\n", err)
+			writePrompt(Ctx, "Error: %s\n", err)
 			glog.Warningf("User error: %s\n", err)
 			continue
 		}
 
-		err = cmd.Run(cmd, ctx)
+		err = cmd.Run(cmd, Ctx)
 		if err != nil {
-			writePrompt(ctx, "Error: %s\n", err)
+			writePrompt(Ctx, "Error: %s\n", err)
 			glog.Warningf("Error in command: %s\n", err)
 		}
 	}
 
-	// Ensure that log data is written.
-	glog.Flush()
+	exit(0)
 }
