@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"os"
 	"time"
 )
 
@@ -27,6 +28,26 @@ func ReadList(r io.Reader) (l List, err error) {
 
 func (l List) Write(w io.Writer) error {
 	return json.NewEncoder(w).Encode(l)
+}
+
+func ReadListFile(path string) (l List, err error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return
+	}
+	defer f.Close()
+
+	return ReadList(f)
+}
+
+func (l List) WriteFile(path string) error {
+	f, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	return l.Write(f)
 }
 
 type Time time.Time

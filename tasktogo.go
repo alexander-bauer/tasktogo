@@ -61,20 +61,12 @@ func main() {
 	}
 
 	// Attempt to load default task list.
-	f, err := os.Open(DefaultListLocation)
+	var err error
+	ctx.List, err = ReadListFile(DefaultListLocation)
 	if err != nil {
-		msg := fmt.Sprintf("Could not open task list %q: %s\n",
-			DefaultListLocation, err)
+		msg := fmt.Sprintf("Could not read task list: %s\n", err)
 		glog.Error(msg)
 		writePrompt(ctx, msg)
-	} else {
-		ctx.List, err = ReadList(f)
-		if err != nil {
-			msg := fmt.Sprintf("Could not decode task list %q: %s\n",
-				DefaultListLocation, err)
-			glog.Error(msg)
-			writePrompt(ctx, msg)
-		}
 	}
 
 	for {
