@@ -103,9 +103,11 @@ func main() {
 			glog.Fatalf("Error: %s\n", err)
 		} else if err != nil {
 			// If the error was user-related, as implied by cmd not
-			// being nil, just log and output the error.
+			// being nil, log and output the error, and start from the
+			// beginning of the loop.
 			writePrompt(ctx, "Error: %s\n", err)
 			glog.Warningf("User error: %s\n", err)
+			continue
 		}
 
 		err = cmd.Run(cmd, ctx)
