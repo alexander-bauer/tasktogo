@@ -105,8 +105,10 @@ func (c *Command) CmdAdd(ctx *Context) (err error) {
 
 	// TODO: retrieve a description somehow
 
-	// Now, add the task to the list and set the "modified" flag.
+	// Now, add the task to the list, sort it, and set the "modified"
+	// flag.
 	ctx.List = append(ctx.List, t)
+	ctx.Sort()
 	ctx.modified = true
 	return nil
 }
