@@ -56,10 +56,7 @@ func (c *Command) CmdList(ctx *Context) (err error) {
 	glog.V(2).Infoln("User invoked list")
 
 	for _, task := range ctx.List {
-		_, err = io.WriteString(ctx.Output, fmt.Sprintf(
-			"%s - %s (%d)\n\t%s\n",
-			task.Name, task.DueBy.Format("Monday, Jan 02, 15:04"),
-			task.Priority, task.Description))
+		_, err = io.WriteString(ctx.Output, task.String())
 		if err != nil {
 			glog.Warningf("Error listing tasks: %s\n", err)
 		}

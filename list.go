@@ -3,10 +3,17 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"sort"
 	"time"
+)
+
+const (
+	// DueFmt is the date format with which due dates are displayed in
+	// stringified Tasks.
+	DueFmt = "Monday, Jan 02, 15:04"
 )
 
 var (
@@ -107,6 +114,13 @@ func (l List) Less(i, j int) bool {
 // Swap does a simple swap of two items. (For use with package sort.)
 func (l List) Swap(i, j int) {
 	l[i], l[j] = l[j], l[i]
+}
+
+// String allows Tasks to be stringified easily.
+func (t *Task) String() string {
+	return fmt.Sprintf("(%d) %s - %s\n\t%s\n",
+		t.Priority, t.DueBy.Format(DueFmt),
+		t.Name, t.Description)
 }
 
 type Time time.Time
