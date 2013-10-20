@@ -122,25 +122,3 @@ func (t *Task) String() string {
 		t.Priority, t.DueBy.Format(DueFmt),
 		t.Name, t.Description)
 }
-
-type Time time.Time
-
-func (t *Time) UnmarshalJSON(b []byte) error {
-	// Remove quotes if possible, and otherwise, error.
-	if len(b) > 2 {
-		b = b[1 : len(b)-1]
-	} else {
-		return InvalidTimeFormatError
-	}
-	print(b)
-
-	// Next, try to parse the time.
-	newtime, err := time.Parse(time.RFC3339, string(b))
-	if err != nil {
-		return err
-	}
-
-	// Do some magic.
-	*t = *(*Time)(&newtime)
-	return nil
-}
