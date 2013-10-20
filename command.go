@@ -35,6 +35,8 @@ var RunMap = map[string]Runner{
 	"l":    (*Command).CmdList,
 	"add":  (*Command).CmdAdd,
 	"a":    (*Command).CmdAdd,
+	"done": (*Command).CmdDone,
+	"d":    (*Command).CmdDone,
 }
 
 type Runner func(*Command, *Context) error
@@ -110,5 +112,26 @@ func (c *Command) CmdAdd(ctx *Context) (err error) {
 	ctx.List = append(ctx.List, t)
 	ctx.Sort()
 	ctx.modified = true
+	return nil
+}
+
+func (c *Command) CmdDone(ctx *Context) (err error) {
+	glog.V(2).Infoln("User invoked done")
+
+	// Re-combine the arguments into a single prefix string to search
+	// for.
+	searchterm := strings.Join(c.Args, " ")
+
+	// Iterate through the List and remove the first Task for which
+	// the searchterm matches the start of the string.
+	for n, task := range ctx.List {
+		if strings.HasPrefix(
+			strings.ToLower(task.Name), searchterm) {
+			// Reslice around the task to be removed.
+			ctx.List = append(ctx.List[:n], ctx.List[n+1:]...)
+			ctx.modified = true
+			return nil
+		}
+	}
 	return nil
 }
