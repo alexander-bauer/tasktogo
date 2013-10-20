@@ -96,6 +96,10 @@ func (c *Command) CmdAdd(ctx *Context) (err error) {
 	if err != nil {
 		return errors.New("Could not parse arguments")
 	}
+	// Assume that the date given is for this year.
+	// TODO: use the next occurence of that date, rather than the one
+	// for the current calendar year.
+	due = due.AddDate(time.Now().Year(), 0, 0)
 
 	t.DueBy = due.Local()
 
