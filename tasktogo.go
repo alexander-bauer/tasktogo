@@ -104,9 +104,48 @@ func main() {
 		Ctx.loadpath = DefaultListLocation
 	}
 
+	// If there are arguments, run in command mode.
+	if len(os.Args) > 1 {
+		exit(runCommandMode(Ctx))
+	} else {
+		exit(runInteractiveMode(Ctx))
+	}
+}
+
+// runCommandMode constructs a Command from OS arguments, runs it, and
+// returns the appropriate exit value.
+func runCommandMode(ctx *Context) int {
+	// Pass the slice of arguments to TaskToGo to ParseCommand. Note
+	// that if there are none, we will pass an empty slice properly,
+	// rather than panicing. `([]int{0, 1, 2}[3:]` works perfectly
+	// fine.
+	c, err := ParseCommand(os.Args[1:])
+	if err != nil {
+		// If the command was invalid, log it and return 1.
+		writePrompt(ctx, "Error: %s\n", err)
+		glog.Warningf("User error: %s\n", err)
+		return 1
+	}
+
+	// Run the command.
+	err = c.Run(c, ctx)
+	if err != nil {
+		writePrompt(ctx, "Error: %s\n", err)
+		glog.Warningf("Error in command: %s\n", err)
+		return 1
+	}
+
+	// If we get to this point, return successful.
+	return 0
+}
+
+// runInteractiveMode runs TaskToGo in interactive mode, accepting
+// commands from the Context.Input and calling Run on them. It returns
+// the value with which the program should exit.
+func runInteractiveMode(ctx *Context) int {
 	for {
 		// Print the prompt once, and get any errors.
-		cmd, err := Prompt(Ctx)
+		c, err := Prompt(ctx)
 
 		if err == io.EOF {
 			// If we encounter a graceful EOF, then we must exit
@@ -115,33 +154,31 @@ func main() {
 
 			// Print a final newline before exiting, however, so that
 			// the shell prompt isn't affected.
-			writePrompt(Ctx, "\n")
+			writePrompt(ctx, "\n")
 
 			// Exit gracefully.
 			exit(0)
-		} else if err != nil && cmd == nil {
+		} else if err != nil && c == nil {
 			// If the error was not graceful and cannot be recovered
 			// from, exit fatally.
-			writePrompt(Ctx, "Fatal error: %s\n", err)
+			writePrompt(ctx, "Fatal error: %s\n", err)
 
 			// Ensure that log data is written before exiting.
 			glog.Flush()
 			glog.Fatalf("Error: %s\n", err)
 		} else if err != nil {
-			// If the error was user-related, as implied by cmd not
+			// If the error was user-related, as implied by c not
 			// being nil, log and output the error, and start from the
 			// beginning of the loop.
-			writePrompt(Ctx, "Error: %s\n", err)
+			writePrompt(ctx, "Error: %s\n", err)
 			glog.Warningf("User error: %s\n", err)
 			continue
 		}
 
-		err = cmd.Run(cmd, Ctx)
+		err = c.Run(c, ctx)
 		if err != nil {
-			writePrompt(Ctx, "Error: %s\n", err)
+			writePrompt(ctx, "Error: %s\n", err)
 			glog.Warningf("Error in command: %s\n", err)
 		}
 	}
-
-	exit(0)
 }
