@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	Version = "0"
+	Version = "0.1"
 
 	// DefaultListLocation is the location of the default task list,
 	// which is ".tasktogo" in at the user's home directory. Getting
