@@ -16,6 +16,11 @@ const (
 	DueFormat = "Jan _2 15:04"
 )
 
+var (
+	ErrNoArguments    = errors.New("no arguments given")
+	ErrUnknownCommand = errors.New("unknown command")
+)
+
 type Command struct {
 	// Run is the function underlying the Command, and can be called
 	// to execute the behavior of the Command.
@@ -37,6 +42,30 @@ var RunMap = map[string]Runner{
 	"a":    (*Command).CmdAdd,
 	"done": (*Command).CmdDone,
 	"d":    (*Command).CmdDone,
+}
+
+// ParseCommand constructs a command based on a set of arguments,
+// including the zeroth, and returns any errors.
+func ParseCommand(args []string) (c *Command, err error) {
+	// If there are no arguments, return an error, so that we don't
+	// run into a panic later.
+	if len(args) == 0 {
+		return nil, ErrNoArguments
+	}
+
+	// Initialize the Command that will be returned.
+	c = &Command{}
+
+	// Check for the existence of the matching function, and return an
+	// error if it's not found.
+	var ok bool
+	c.Run, ok = RunMap[strings.ToLower(args[0])]
+	if !ok {
+		return c, ErrUnknownCommand
+	}
+
+	c.Args = args[1:]
+	return
 }
 
 type Runner func(*Command, *Context) error

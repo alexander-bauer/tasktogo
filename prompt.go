@@ -1,19 +1,12 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"github.com/gobs/args"
-	"strings"
 )
 
 const (
 	PromptString = ": "
-)
-
-var (
-	ErrNoArguments    = errors.New("no arguments given")
-	ErrUnknownCommand = errors.New("unknown command")
 )
 
 // Prompt writes a prompt to the screen and reads the Input stream
@@ -21,7 +14,7 @@ var (
 // it encounters an error, no the command that's been parsed so far
 // will be returned. It will not print any more than the initial
 // prompt.
-func Prompt(ctx *Context) (cmd *Command, err error) {
+func Prompt(ctx *Context) (c *Command, err error) {
 	// Write the prompt to the appropriate io.Writer.
 	writePrompt(ctx, PromptString)
 
@@ -34,27 +27,8 @@ func Prompt(ctx *Context) (cmd *Command, err error) {
 	}
 
 	// Split the arguments, obeying quotes, double quotes, and
-	// backslashes.
-	inArgs := args.GetArgs(line)
-
-	// If there are no arguments, return an error, so that we don't
-	// run into a panic later.
-	if len(inArgs) == 0 {
-		return nil, ErrNoArguments
-	}
-
-	// Initialize the Command that will be returned.
-	cmd = &Command{}
-
-	// Check for the existence of the matching function, and return an
-	// error if it's not found.
-	var ok bool
-	cmd.Run, ok = RunMap[strings.ToLower(inArgs[0])]
-	if !ok {
-		return cmd, ErrUnknownCommand
-	}
-
-	cmd.Args = inArgs[1:]
+	// backslashes, and parse them into a command immediately.
+	c, err = ParseCommand(args.GetArgs(line))
 
 	return
 }
