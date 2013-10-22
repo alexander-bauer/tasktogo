@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"flag"
 	"fmt"
 	"github.com/golang/glog"
 	"io"
@@ -36,6 +37,11 @@ var (
 
 	// Ctx is the global context.
 	Ctx *Context
+)
+
+// Flags
+var (
+	FlagColor = flag.Bool("color", true, "enable list colorization")
 )
 
 type Context struct {
@@ -88,13 +94,15 @@ func exit(status int) {
 }
 
 func main() {
-	// Set up a basic context. In the future, this could be determined
-	// by flags.
+	// Parse andy command line flags.
+	flag.Parse()
+
+	// Set up a basic context, making use of the flags.
 	Ctx = &Context{
 		Input:  bufio.NewReader(os.Stdin),
 		Output: os.Stdout,
 
-		Colors: true,
+		Colors: *FlagColor,
 	}
 
 	// Attempt to load default task list.
@@ -110,7 +118,7 @@ func main() {
 	}
 
 	// If there are arguments, run in command mode.
-	if len(os.Args) > 1 {
+	if flag.NArg() > 0 {
 		exit(runCommandMode(Ctx))
 	} else {
 		exit(runInteractiveMode(Ctx))
@@ -124,7 +132,7 @@ func runCommandMode(ctx *Context) int {
 	// that if there are none, we will pass an empty slice properly,
 	// rather than panicing. `([]int{0, 1, 2}[3:]` works perfectly
 	// fine.
-	c, err := ParseCommand(os.Args[1:])
+	c, err := ParseCommand(flag.Args())
 	if err != nil {
 		// If the command was invalid, log it and return 1.
 		writePrompt(ctx, "Error: %s\n", err)
