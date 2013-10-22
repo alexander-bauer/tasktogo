@@ -53,6 +53,10 @@ type Context struct {
 	// data.
 	List
 
+	// Colors is a flag which determines whether tasks should colorize
+	// themselves according to due date when using String().
+	Colors bool
+
 	// loadpath is the path on the filesystem from which the List was
 	// loaded.
 	loadpath string
@@ -89,6 +93,8 @@ func main() {
 	Ctx = &Context{
 		Input:  bufio.NewReader(os.Stdin),
 		Output: os.Stdout,
+
+		Colors: true,
 	}
 
 	// Attempt to load default task list.
