@@ -49,9 +49,8 @@ type Context struct {
 	// Prompt output.
 	Output, Prompt io.Writer
 
-	// List is task List that contains all known tasks and associated
+	// List is task list that contains all known tasks and associated
 	// data.
-	// TODO: ensure that it is sorted
 	List
 
 	// loadpath is the path on the filesystem from which the List was
