@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/aybabtme/color"
+	"github.com/golang/glog"
 	"io"
 	"os"
 	"sort"
@@ -61,8 +62,13 @@ func (l List) Write(w io.Writer) error {
 }
 
 func ReadListFile(path string) (l List, err error) {
+	// Try to read the file. If the error is that the file doesn't
+	// exist, return an empty list, or otherwise return an error.
 	f, err := os.Open(path)
-	if err != nil {
+	if os.IsNotExist(err) {
+		glog.Infof("List file %q doesn't exist, using blank\n", path)
+		return List{}, nil
+	} else if err != nil {
 		return
 	}
 	defer f.Close()

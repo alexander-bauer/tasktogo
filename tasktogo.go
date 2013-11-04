@@ -88,7 +88,8 @@ func main() {
 
 	// Attempt to load the given task list.
 	var err error
-	Ctx.List, err = ReadListFile(os.ExpandEnv(*FlagList))
+	Ctx.loadpath = os.ExpandEnv(*FlagList)
+	Ctx.List, err = ReadListFile(Ctx.loadpath)
 	if err != nil {
 		msg := fmt.Sprintf("Could not read task list: %s\n", err)
 		glog.Error(msg)
