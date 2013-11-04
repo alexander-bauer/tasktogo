@@ -47,14 +47,14 @@ var RunMap = map[string]Runner{
 // ParseCommand constructs a command based on a set of arguments,
 // including the zeroth, and returns any errors.
 func ParseCommand(args []string) (c *Command, err error) {
+	// Initialize the Command that will be returned.
+	c = &Command{}
+
 	// If there are no arguments, return an error, so that we don't
 	// run into a panic later.
 	if len(args) == 0 {
-		return nil, ErrNoArguments
+		return c, ErrNoArguments
 	}
-
-	// Initialize the Command that will be returned.
-	c = &Command{}
 
 	// Check for the existence of the matching function, and return an
 	// error if it's not found.
