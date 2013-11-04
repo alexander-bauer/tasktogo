@@ -7,33 +7,11 @@ import (
 	"github.com/golang/glog"
 	"io"
 	"os"
-	"os/user"
 	"path"
 )
 
 var (
 	Version = "0.2"
-
-	// DefaultListLocation is the location of the default task list,
-	// which is ".tasktogo" in at the user's home directory. Getting
-	// that in the var declaration requires a function call to wrap
-	// os/user.Current().HomeDir
-	DefaultListLocation = path.Join(
-		func() string {
-			user, err := user.Current()
-			if err != nil {
-				glog.Warningf("Could not get current user: %s\n", err)
-				return "."
-			}
-
-			if user.HomeDir == "" {
-				glog.Warningf("Could not get user's homedir: %s\n", err)
-				return "."
-			}
-
-			return user.HomeDir
-		}(),
-		".tasktogo")
 
 	// Ctx is the global context.
 	Ctx *Context
@@ -42,6 +20,9 @@ var (
 // Flags
 var (
 	FlagColor = flag.Bool("color", true, "enable list colorization")
+
+	FlagList = flag.String("l", path.Join("$HOME", ".tasktogo"),
+		"select task list")
 )
 
 type Context struct {
@@ -105,16 +86,13 @@ func main() {
 		Colors: *FlagColor,
 	}
 
-	// Attempt to load default task list.
+	// Attempt to load the given task list.
 	var err error
-	Ctx.List, err = ReadListFile(DefaultListLocation)
+	Ctx.List, err = ReadListFile(os.ExpandEnv(*FlagList))
 	if err != nil {
 		msg := fmt.Sprintf("Could not read task list: %s\n", err)
 		glog.Error(msg)
 		writePrompt(Ctx, msg)
-	} else {
-		// If there were no errors, record information in the context.
-		Ctx.loadpath = DefaultListLocation
 	}
 
 	// If there are arguments, run in command mode.
