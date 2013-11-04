@@ -7,6 +7,7 @@ import (
 	"github.com/aybabtme/color"
 	"github.com/golang/glog"
 	"io"
+	"math"
 	"os"
 	"sort"
 	"time"
@@ -105,11 +106,9 @@ func (l List) Less(i, j int) bool {
 	// again.
 	x, y := l[i], l[j]
 
-	// Calculate the nice values, which are just priority * (due date
-	// - now). A lower value implies a higher precedence.
-	now := time.Now()
-	xnice, ynice := x.Priority*int((x.DueBy.Sub(now))),
-		y.Priority*int((y.DueBy.Sub(now)))
+	// Calculate the nice values. A lower value implies a higher
+	// precedence.
+	xnice, ynice := x.Nice(), y.Nice()
 
 	// If the task at i (x) should be sorted before the one at j (y),
 	// return true. Note that we use strictly less than and strictly
@@ -134,6 +133,18 @@ func (l List) Less(i, j int) bool {
 // Swap does a simple swap of two items. (For use with package sort.)
 func (l List) Swap(i, j int) {
 	l[i], l[j] = l[j], l[i]
+}
+
+// Nice calculates the numerical nice value for a Task, so that it can
+// be sorted easily. The formula is
+//
+//     log(priority) * (due - now)
+//
+// where timestamps are UNIX dates.
+func (t *Task) Nice() int {
+	return int(
+		math.Log(float64(t.Priority)) *
+			float64(t.DueBy.Sub(time.Now())))
 }
 
 // String allows Tasks to be stringified easily. If the global Context
