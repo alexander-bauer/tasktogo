@@ -147,7 +147,7 @@ func (c *Command) CmdDone(ctx *Context) (err error) {
 
 	// Re-combine the arguments into a single prefix string to search
 	// for.
-	searchterm := strings.Join(c.Args, " ")
+	searchterm := strings.ToLower(strings.Join(c.Args, " "))
 
 	// Iterate through the List and remove the first Task for which
 	// the searchterm matches the start of the string.
