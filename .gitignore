@@ -1,6 +1,9 @@
 # Specific binary
 tasktogo
 
+# Generated directories
+man/
+
 # Temporary files and backups
 *#*
 *~

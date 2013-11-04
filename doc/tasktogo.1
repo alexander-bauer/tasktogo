@@ -1,0 +1,90 @@
+.TH TASKTOGO 1 "November 2013"
+
+.SH NAME
+tasktogo \- manage to-do lists
+
+.SH SYNOPSYS
+
+.B tasktogo
+[\fIflags\fR]
+
+.B tasktogo
+[\fIflags\fR] \fIcommand\fR [\fIargs...\fR]
+
+.SH DESCRIPTION
+
+.B tasktogo
+is a task list manager built for interactive and scripting use. It is
+capable of sorting and ranking tasks based on their priorities and due
+dates, as well as adding and modifying dates.
+
+If a command is given at invocation, it will be immediately executed,
+exit. Otherwise
+.B tasktogo
+will enter a shell-like interactive mode for executing multiple
+commands in sequence. Recognized commands are listed below, as are
+flags, which can only be passed at initial invocation.
+
+.SH COMMANDS
+.PP
+.BR help ,\  h
+.RS 4
+prints a brief help text containing commands and descriptions.
+.RE
+.PP
+.BR list ,\  l
+.RS 4
+lists all current tasks, one per line. If the \fI--color\fR option is
+not false, it will colorize output according to nearness to due date,
+with red being the most urgent.
+.RE
+.PP
+.BR add ,\  a
+\fItaskname\fR \fIpriority\fR \fImonth\fR \fIday\fR
+\fIhour\fR:\fIminute\fR
+.RS 4
+adds a task, identified by \fItaskname\fR, which can be an unquoted
+string containing any characters. The \fIhour\fR must be in 24-hour
+format.
+.RE
+.PP
+.BR done ,\  d
+\fItaskname\fR
+.RS 4
+removes a task from the list, as identified by \fItask name\fR. It
+does not need to be the whole task name, and will permanently remove
+the first task in the list with a name starting with the supplied
+string.
+.RE
+
+.SH OPTIONS
+.PP
+.B \-l
+.RS 4
+specifies the file to use as the current task list. If it does not
+exist, and the command is an operation which modifies the list, such
+as \fBadd\fR, then it will be created before exiting.
+.RE
+.PP
+.B \-\-color
+.RS 4
+determines whether list output should be colorized according to due
+date. It defaults to enabled.
+.RE
+
+.SH AUTHOR
+Written by Alexander Bauer.
+
+.SH "REPORTING BUGS"
+Please report bugs and feature requests to the issues page at
+<https://github.com/SashaCrofter/tasktogo/issues>, or to the
+maintainer at sasha@crofter.org
+
+.SH COPYRIGHT
+Copyright \(co 2013 Alexander Bauer.
+
+License GPLv3+: GNU GPL version 3
+or later <http://gnu.org/licenses/gpl.html>.
+.br
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
