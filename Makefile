@@ -1,7 +1,9 @@
 PROGRAM_NAME := tasktogo
 VERSION := $(shell git describe --dirty=+)
 
-GOCOMPILER = go build
+ifndef GOCOMPILER
+GOCOMPILER = go build $(GOFLAGS)
+endif
 GOFLAGS	+= -ldflags "-X main.Version $(VERSION)"
 
 # If the prefix is not yet defined, define it here.
@@ -14,7 +16,7 @@ endif
 all: $(PROGRAM_NAME) man
 
 $(PROGRAM_NAME): $(wildcard *.go)
-	$(GOCOMPILER) $(GOFLAGS)
+	$(GOCOMPILER)
 
 # Compile man page sources in `doc` to `man`.
 man: doc/tasktogo.1
