@@ -1,10 +1,13 @@
 PROGRAM_NAME := tasktogo
-VERSION = $(shell git describe --dirty=+)
+VERSION := $(shell git describe --dirty=+)
 
 GOCOMPILER = go build
 GOFLAGS	+= -ldflags "-X main.Version $(VERSION)"
 
-PREFIX = /usr
+# If the prefix is not yet defined, define it here.
+ifndef prefix
+prefix = /usr/local
+endif
 
 .PHONY: all install clean
 
@@ -15,12 +18,14 @@ $(PROGRAM_NAME): $(wildcard *.go)
 
 # Compile man page sources in `doc` to `man`.
 man: doc/tasktogo.1
-	test -d man || mkdir man
+	test -d man || mkdir -p man
 	gzip -c doc/tasktogo.1 > man/tasktogo.1.gz
 
 install: all
-	install -m 0755 $(PROGRAM_NAME) $(PREFIX)/bin
-	install -m 0644 man/tasktogo.1.gz $(PREFIX)/share/man/man1
+	test -d $(prefix)/bin || mkdir -p $(prefix)/bin
+	test -d $(prefix)/share/man/man1 || mkdir -p $(prefix)/share/man/man1
+	install -m 0755 $(PROGRAM_NAME) $(prefix)/bin
+	install -m 0644 man/tasktogo.1.gz $(prefix)/share/man/man1
 
 clean:
 	- rm -rf $(PROGRAM_NAME)
