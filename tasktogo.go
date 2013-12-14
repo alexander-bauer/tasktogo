@@ -75,7 +75,7 @@ func exit(status int) {
 }
 
 func main() {
-	// Parse andy command line flags.
+	// Parse and command line flags.
 	flag.Parse()
 
 	// Set up a basic context, making use of the flags.

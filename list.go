@@ -1,15 +1,14 @@
 package main
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/aybabtme/color"
 	"github.com/golang/glog"
-	"io"
 	"math"
 	"os"
 	"sort"
+	"strings"
 	"time"
 )
 
@@ -36,30 +35,31 @@ var (
 	InvalidTimeFormatError = errors.New("Invalid time format")
 )
 
-type List []*Task
+type List []Task
 
-type Task struct {
+type Task interface {
+	// Nice is the integer value which determines how urgent the task
+	// is, with lower values meaning greater urgency.
+	Nice() int
+
+	// Match checks whether a given search term should match the task,
+	// usually comparing the task name, if appropriate. There is no
+	// case guarantee.
+	Match(string) bool
+
+	// String formats the task in a brief list-friendly format,
+	// typically without a description.
+	String() string
+
+	// LongString is similar to String, but includes the description
+	// if appropriate.
+	LongString() string
+}
+
+type DefiniteTask struct {
 	Priority          int
 	DueBy             time.Time
 	Name, Description string
-}
-
-// ReadList decodes a JSON-encoded List from the given io.Reader, then
-// sorts and returns it.
-func ReadList(r io.Reader) (l List, err error) {
-	l = List{}
-	err = json.NewDecoder(r).Decode(&l)
-	if err != nil {
-		return
-	}
-	l.Sort()
-	return
-}
-
-// Write JSON-encodes the List to the given io.Writer, using
-// non-pretty formatting. It does not sort the List.
-func (l List) Write(w io.Writer) error {
-	return json.NewEncoder(w).Encode(l)
 }
 
 func ReadListFile(path string) (l List, err error) {
@@ -116,17 +116,8 @@ func (l List) Less(i, j int) bool {
 	// determine by another method.
 	if xnice < ynice {
 		return true
-	} else if xnice > ynice {
-		return false
 	} else {
-		// If they're equal, sort by due date. Note that if the due
-		// dates are equal, the priorities must also be equal, and
-		// they'll just end up being sorted by insertion order.
-		if y.DueBy.After(x.DueBy) {
-			return true
-		} else {
-			return false
-		}
+		return false
 	}
 }
 
@@ -135,21 +126,28 @@ func (l List) Swap(i, j int) {
 	l[i], l[j] = l[j], l[i]
 }
 
-// Nice calculates the numerical nice value for a Task, so that it can
-// be sorted easily. The formula is
+// Nice calculates the numerical nice value for a DefiniteTask, so
+// that it can be sorted easily. The formula is
 //
 //     log(priority) * (due - now)
 //
 // where timestamps are UNIX dates.
-func (t *Task) Nice() int {
+func (t *DefiniteTask) Nice() int {
 	return int(
 		math.Log(float64(t.Priority)) *
 			float64(t.DueBy.Sub(time.Now())))
 }
 
-// String allows Tasks to be stringified easily. If the global Context
-// specifies that color is allowed, it will be used.
-func (t *Task) String() string {
+// Match checks whether the given search term matches the task's title
+// case-insensitively and returns the result.
+func (t *DefiniteTask) Match(term string) bool {
+	return strings.HasPrefix(
+		strings.ToLower(t.Name), strings.ToLower(term))
+}
+
+// String allows DefiniteTasks to be stringified easily. If the global
+// Context specifies that color is allowed, it will be used.
+func (t *DefiniteTask) String() string {
 	// Colorize if appropriate.
 	if Ctx.Colors {
 		// Find the appropriate color based on the imminence of the
@@ -167,7 +165,7 @@ func (t *Task) String() string {
 
 // LongString allows Tasks to be stringified in full, including the
 // description. Its behavior is similar to String.
-func (t *Task) LongString() string {
+func (t *DefiniteTask) LongString() string {
 	// Colorize if appropriate.
 	if Ctx.Colors {
 		// Find the appropriate color based on the imminence of the

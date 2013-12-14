@@ -98,7 +98,7 @@ func (c *Command) CmdList(ctx *Context) (err error) {
 func (c *Command) CmdAdd(ctx *Context) (err error) {
 	glog.V(2).Infoln("User invoked add")
 
-	t := &Task{}
+	t := &DefiniteTask{}
 	var datestring string
 	// Separate the arguments into sections and fill out the Task with
 	// them. The syntax is "add [multiword name] [priority] [month-day
@@ -152,8 +152,7 @@ func (c *Command) CmdDone(ctx *Context) (err error) {
 	// Iterate through the List and remove the first Task for which
 	// the searchterm matches the start of the string.
 	for n, task := range ctx.List {
-		if strings.HasPrefix(
-			strings.ToLower(task.Name), searchterm) {
+		if task.Match(searchterm) {
 			// Reslice around the task to be removed.
 			ctx.List = append(ctx.List[:n], ctx.List[n+1:]...)
 			ctx.modified = true
