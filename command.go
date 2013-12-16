@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/golang/glog"
 	"io"
+	"math"
 	"strconv"
 	"strings"
 	"time"
@@ -34,14 +35,16 @@ type Command struct {
 
 // RunMap is used to map command strings to Runners.
 var RunMap = map[string]Runner{
-	"help": (*Command).CmdHelp,
-	"h":    (*Command).CmdHelp,
-	"list": (*Command).CmdList,
-	"l":    (*Command).CmdList,
-	"add":  (*Command).CmdAdd,
-	"a":    (*Command).CmdAdd,
-	"done": (*Command).CmdDone,
-	"d":    (*Command).CmdDone,
+	"help":       (*Command).CmdHelp,
+	"h":          (*Command).CmdHelp,
+	"list":       (*Command).CmdList,
+	"l":          (*Command).CmdList,
+	"add":        (*Command).CmdAdd,
+	"a":          (*Command).CmdAdd,
+	"eventually": (*Command).CmdEventually,
+	"e":          (*Command).CmdEventually,
+	"done":       (*Command).CmdDone,
+	"d":          (*Command).CmdDone,
 }
 
 // ParseCommand constructs a command based on a set of arguments,
@@ -136,6 +139,50 @@ func (c *Command) CmdAdd(ctx *Context) (err error) {
 
 	// Now, add the task to the list, sort it, and set the "modified"
 	// flag.
+	ctx.List = append(ctx.List, t)
+	ctx.Sort()
+	ctx.modified = true
+	return nil
+}
+
+func (c *Command) CmdEventually(ctx *Context) (err error) {
+	glog.V(2).Infoln("User invoked eventually")
+
+	t := &EventualTask{}
+	// Loop through the arguments until we find a priority factor,
+	// which will be just an integer. The syntax is as follows.
+	//
+	//     eventually Take out the trash 3 8h
+	var durationstring string
+	var priority int
+	for _, arg := range c.Args {
+		// If the Priority has not yet been filled out, try to parse
+		// the current argument as an int. Otherwise, append the
+		// argument to the durationstring to be parsed at the end.
+		if priority == 0 {
+			priority, err = strconv.Atoi(arg)
+			if err != nil {
+				// If the priority couldn't be parsed, consider it
+				// part of the name.
+				t.Name += arg + " "
+			}
+		} else {
+			durationstring += arg + " "
+		}
+	}
+	t.Name = strings.TrimRight(t.Name, " ")
+
+	// Try to parse the duration string. If it fails,
+	d, err := time.ParseDuration(strings.TrimRight(durationstring, " "))
+	if err != nil {
+		println(err.Error())
+		return errors.New("Could not parse arguments")
+	}
+
+	t.NiceVal = int(math.Log(float64(priority)) * float64(d))
+
+	// TODO: retrieve a description somehow
+
 	ctx.List = append(ctx.List, t)
 	ctx.Sort()
 	ctx.modified = true

@@ -88,3 +88,27 @@ func (t *DefiniteTask) LongString() string {
 		t.Priority, t.DueBy.Format(DueFmt),
 		t.Name, t.Description)
 }
+
+// EventualTask floats around in the todo list, remaining at a
+// constant Nice value.
+type EventualTask struct {
+	NiceVal           int
+	Name, Description string
+}
+
+func (t *EventualTask) Nice() int {
+	return t.NiceVal
+}
+
+func (t *EventualTask) Match(term string) bool {
+	return strings.HasPrefix(
+		strings.ToLower(t.Name), strings.ToLower(term))
+}
+
+func (t *EventualTask) String() string {
+	return t.Name + "\n"
+}
+
+func (t *EventualTask) LongString() string {
+	return t.Name + "\n\t" + t.Description + "\n"
+}

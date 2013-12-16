@@ -10,6 +10,7 @@ import (
 // on-disk. It provides its own JSON marshallers and unmarshallers.
 type fileList struct {
 	Definite []*DefiniteTask
+	Eventual []*EventualTask
 }
 
 var (
@@ -40,12 +41,16 @@ func (l List) Write(w io.Writer) error {
 
 // List converts a fileList to a List, sorts it, and returns it.
 func (fl *fileList) List() (l List) {
-	l = make(List, len(fl.Definite))
+	l = make(List, len(fl.Definite)+len(fl.Eventual))
 
 	// Now, loop through each individual element of the fileList,
 	// convert it to the Task interface, and place it in the list.
 	j := 0
 	for _, t := range fl.Definite {
+		l[j] = Task(t)
+		j++
+	}
+	for _, t := range fl.Eventual {
 		l[j] = Task(t)
 		j++
 	}
@@ -57,12 +62,14 @@ func (fl *fileList) List() (l List) {
 func toFileList(l List) (fl *fileList, err error) {
 	fl = &fileList{
 		Definite: make([]*DefiniteTask, 0),
+		Eventual: make([]*EventualTask, 0),
 	}
 
 	for _, t := range l {
-		converted, ok := t.(*DefiniteTask)
-		if ok {
+		if converted, ok := t.(*DefiniteTask); ok {
 			fl.Definite = append(fl.Definite, converted)
+		} else if converted, ok := t.(*EventualTask); ok {
+			fl.Eventual = append(fl.Eventual, converted)
 		} else {
 			return nil, UnknownTaskType
 		}
