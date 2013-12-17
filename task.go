@@ -112,9 +112,10 @@ func (t *EventualTask) Match(term string) bool {
 }
 
 func (t *EventualTask) String() string {
-	return t.Name + "\n"
+	return fmt.Sprintf("(%d) - %s\n", t.Priority, t.Name)
 }
 
 func (t *EventualTask) LongString() string {
-	return t.Name + "\n\t" + t.Description + "\n"
+	return fmt.Sprintf("(%d) - %s\n\t%s\n",
+		t.Priority, t.Name, t.Description)
 }
