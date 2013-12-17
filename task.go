@@ -26,6 +26,12 @@ type Task interface {
 	LongString() string
 }
 
+const (
+	// EventualFactor is the amount of time by which the priorities on
+	// eventual tasks are multiplied.
+	EventualFactor = float64(time.Hour * 72)
+)
+
 type DefiniteTask struct {
 	Priority          int
 	DueBy             time.Time
@@ -92,12 +98,12 @@ func (t *DefiniteTask) LongString() string {
 // EventualTask floats around in the todo list, remaining at a
 // constant Nice value.
 type EventualTask struct {
-	NiceVal           int
+	Priority          int
 	Name, Description string
 }
 
 func (t *EventualTask) Nice() int {
-	return t.NiceVal
+	return int(math.Log(float64(t.Priority)) * EventualFactor)
 }
 
 func (t *EventualTask) Match(term string) bool {
