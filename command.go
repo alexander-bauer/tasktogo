@@ -38,6 +38,8 @@ type Command struct {
 var RunMap = map[string]Runner{
 	"help":       (*Command).CmdHelp,
 	"h":          (*Command).CmdHelp,
+	"exit":       (*Command).CmdExit,
+	"quit":       (*Command).CmdExit,
 	"list":       (*Command).CmdList,
 	"l":          (*Command).CmdList,
 	"add":        (*Command).CmdAdd,
@@ -79,10 +81,17 @@ func (c *Command) CmdHelp(ctx *Context) (err error) {
 
 	fmt.Fprintf(ctx.Output, "TaskToDo version %s\n\n", Version)
 	fmt.Fprintf(ctx.Output, "    help\t\t\t\t\t- print this menu\n")
+	fmt.Fprintf(ctx.Output, "    exit\t\t\t\t\t- exit gracefully\n")
 	fmt.Fprintf(ctx.Output, "    list\t\t\t\t\t- list all tasks\n")
 	fmt.Fprintf(ctx.Output, "    add [Task name] [priority] [Month day hour:minute]\t- add a task\n")
 	fmt.Fprintf(ctx.Output, "    done [Task name]\t\t\t\t- complete a task\n")
 
+	return nil
+}
+
+func (c *Command) CmdExit(ctx *Context) (err error) {
+	glog.V(2).Infoln("User invoked exit")
+	exit(0)
 	return nil
 }
 
