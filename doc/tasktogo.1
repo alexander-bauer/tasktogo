@@ -80,11 +80,19 @@ specifies the file to use as the current task list. If it does not
 exist, and the command is an operation which modifies the list, such
 as \fBadd\fR, then it will be created before exiting.
 .RE
+
 .PP
 .B \-\-color
 .RS 4
 determines whether list output should be colorized according to due
 date. It defaults to enabled.
+.RE
+
+.PP
+.B \-n
+.RS 4
+determines how many tasks will be shown at most. If it is -1, then all
+tasks will be shown. It defaults to 10.
 .RE
 
 .SH AUTHOR

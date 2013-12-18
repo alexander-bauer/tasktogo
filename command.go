@@ -99,7 +99,14 @@ func (c *Command) CmdExit(ctx *Context) (err error) {
 func (c *Command) CmdList(ctx *Context) (err error) {
 	glog.V(2).Infoln("User invoked list")
 
-	for _, task := range ctx.List {
+	// Only show the first n tasks, but make sure that n doesn't go
+	// out of bounds. Also, if n is -1, show all tasks.
+	n := ctx.MaxListItems
+	if n >= len(ctx.List) || n < 0 {
+		n = len(ctx.List) - 1
+	}
+
+	for _, task := range ctx.List[:n] {
 		_, err = io.WriteString(ctx.Output, task.String())
 		if err != nil {
 			glog.Warningf("Error listing tasks: %s\n", err)

@@ -19,7 +19,8 @@ var (
 
 // Flags
 var (
-	FlagColor = flag.Bool("color", true, "enable list colorization")
+	FlagColor   = flag.Bool("color", true, "enable list colorization")
+	FlagMaxList = flag.Int("n", 10, "max items to be shown in list view")
 
 	FlagList = flag.String("l", path.Join("$HOME", ".tasktogo"),
 		"select task list")
@@ -39,6 +40,10 @@ type Context struct {
 	// List is task list that contains all known tasks and associated
 	// data.
 	List
+
+	// MaxListItems is the maximum number of tasks that will be
+	// displayed at once.
+	MaxListItems int
 
 	// Colors is a flag which determines whether tasks should colorize
 	// themselves according to due date when using String().
@@ -83,7 +88,8 @@ func main() {
 		Input:  bufio.NewReader(os.Stdin),
 		Output: os.Stdout,
 
-		Colors: *FlagColor,
+		Colors:       *FlagColor,
+		MaxListItems: *FlagMaxList,
 	}
 
 	// Attempt to load the given task list.
