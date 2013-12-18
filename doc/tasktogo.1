@@ -40,9 +40,11 @@ exits gracefully with status 0.
 .BR list ,\  l
 [\fImaxItems\fR]
 .RS 4
-lists all current tasks, one per line. If the \fI--color\fR option is
-not false, it will colorize output according to nearness to due date
-or priority of the task, with red being the most urgent.
+lists current tasks, one per line. If \fImaxItems\fR is supplied, then
+that many tasks are listed, at most, or if not, the \fI-n\fR option is
+used. If the \fI--color\fR option is not false, it will colorize
+output according to nearness to due date or priority of the task, with
+red being the most urgent.
 .RE
 .PP
 .BR add ,\  a
