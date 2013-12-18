@@ -19,6 +19,8 @@ const (
 var (
 	ErrNoArguments    = errors.New("no arguments given")
 	ErrUnknownCommand = errors.New("unknown command")
+
+	ErrMissingPriority = errors.New("no priority argument given")
 )
 
 type Command struct {
@@ -164,6 +166,12 @@ func (c *Command) CmdEventually(ctx *Context) (err error) {
 			}
 		}
 	}
+
+	// If the priority is still 0, then the syntax was incorrect.
+	if t.Priority == 0 {
+		return ErrMissingPriority
+	}
+
 	t.Name = strings.TrimRight(t.Name, " ")
 
 	// TODO: retrieve a description somehow
