@@ -83,9 +83,9 @@ func (c *Command) CmdHelp(ctx *Context) (err error) {
 	fmt.Fprintf(ctx.Output, "    help\t\t\t\t\t- print this menu\n")
 	fmt.Fprintf(ctx.Output, "    exit\t\t\t\t\t- exit gracefully\n")
 	fmt.Fprintf(ctx.Output, "    list [maxItems]\t\t\t\t- list all tasks\n")
-	fmt.Fprintf(ctx.Output, "    add [Name] [priority] [Month day hr:min]\t- add a task\n")
-	fmt.Fprintf(ctx.Output, "    eventually [Name] [priority]\t\t- add an eventual task\n")
-	fmt.Fprintf(ctx.Output, "    done [Task name]\t\t\t\t- complete a task\n")
+	fmt.Fprintf(ctx.Output, "    add name priority month day hr:min\t- add a task\n")
+	fmt.Fprintf(ctx.Output, "    eventually name priority\t\t- add an eventual task\n")
+	fmt.Fprintf(ctx.Output, "    done name\t\t\t\t- complete a task\n")
 
 	return nil
 }
