@@ -35,17 +35,27 @@ prints a brief help text containing commands and descriptions.
 .BR list ,\  l
 .RS 4
 lists all current tasks, one per line. If the \fI--color\fR option is
-not false, it will colorize output according to nearness to due date,
-with red being the most urgent.
+not false, it will colorize output according to nearness to due date
+or priority of the task, with red being the most urgent.
 .RE
 .PP
 .BR add ,\  a
 \fItaskname\fR \fIpriority\fR \fImonth\fR \fIday\fR
 \fIhour\fR:\fIminute\fR
 .RS 4
-adds a task, identified by \fItaskname\fR, which can be an unquoted
-string containing any characters. The \fIhour\fR must be in 24-hour
-format.
+adds a task with a definite to-do date, identified by \fItaskname\fR,
+which can be an unquoted string containing any characters. The
+\fIhour\fR must be in 24-hour format. The priority must be a positive
+integer, and lower ones are sorted first.
+.RE
+.PP
+.BR eventually ,\  e
+\fItaskname\fR \fIpriority\fR
+.RS 4
+adds a task to be completed eventually, identified by \fItaskname\fR,
+which can be an unquoted string containing any characters. The
+\fIpriority\fR determines how important the task is, and lower
+positive integers are sorted first.
 .RE
 .PP
 .BR done ,\  d
