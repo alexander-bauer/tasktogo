@@ -82,7 +82,7 @@ func (c *Command) CmdHelp(ctx *Context) (err error) {
 	fmt.Fprintf(ctx.Output, "TaskToDo version %s\n\n", Version)
 	fmt.Fprintf(ctx.Output, "    help\t\t\t\t\t- print this menu\n")
 	fmt.Fprintf(ctx.Output, "    exit\t\t\t\t\t- exit gracefully\n")
-	fmt.Fprintf(ctx.Output, "    list\t\t\t\t\t- list all tasks\n")
+	fmt.Fprintf(ctx.Output, "    list [maxItems]\t\t\t\t- list all tasks\n")
 	fmt.Fprintf(ctx.Output, "    add [Name] [priority] [Month day hr:min]\t- add a task\n")
 	fmt.Fprintf(ctx.Output, "    eventually [Name] [priority]\t\t- add an eventual task\n")
 	fmt.Fprintf(ctx.Output, "    done [Task name]\t\t\t\t- complete a task\n")
@@ -101,7 +101,18 @@ func (c *Command) CmdList(ctx *Context) (err error) {
 
 	// Only show the first n tasks, but make sure that n doesn't go
 	// out of bounds. Also, if n is -1, show all tasks.
-	n := ctx.MaxListItems
+	var n int
+
+	// If an argument is given, then try to use it.
+	if len(c.Args) > 0 {
+		n, _ = strconv.Atoi(c.Args[0])
+	}
+
+	// If not, then use the context's setting.
+	if n == 0 {
+		n = ctx.MaxListItems
+	}
+
 	if n >= len(ctx.List) || n < 0 {
 		n = len(ctx.List) - 1
 	}
