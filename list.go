@@ -2,30 +2,15 @@ package main
 
 import (
 	"errors"
-	"github.com/aybabtme/color"
 	"github.com/golang/glog"
 	"os"
 	"sort"
-	"time"
 )
 
 const (
 	// DueFmt is the date format with which due dates are displayed in
 	// stringified Tasks.
 	DueFmt = "Monday, Jan 02, 15:04"
-
-	ColorThreshold = time.Hour * 24
-)
-
-var (
-	Rainbow = []color.Paint{
-		color.RedPaint,
-		color.YellowPaint,
-		color.GreenPaint,
-		color.CyanPaint,
-		color.BluePaint,
-		color.PurplePaint,
-	}
 )
 
 var (
@@ -96,31 +81,4 @@ func (l List) Less(i, j int) bool {
 // Swap does a simple swap of two items. (For use with package sort.)
 func (l List) Swap(i, j int) {
 	l[i], l[j] = l[j], l[i]
-}
-
-// ColorForDate returns a color.Brush appropriate for the given date,
-// according to the given threshold. It goes in spectrum order from
-// purple to red, as terminal colors allow, in order of increasing
-// urgency.
-func ColorForDate(dueby time.Time, threshold time.Duration) color.Brush {
-	// Determine how far away the due date is.
-	distance := dueby.Sub(time.Now())
-
-	// Determine which paint to use by finding the number of times the
-	// threshold goes into the distance.
-	col := int(distance / threshold)
-
-	// Store this for a moment so that we don't have to keep invoking
-	// len().
-	sizeRainbow := len(Rainbow)
-
-	if col >= sizeRainbow {
-		col = len(Rainbow) - 1
-	} else if col < 0 {
-		col = 0
-	}
-
-	// Return a new brush with the default background color and the
-	// calculated foreground color.
-	return color.NewBrush(color.Paint(""), Rainbow[col])
 }

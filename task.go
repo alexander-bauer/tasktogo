@@ -30,6 +30,10 @@ const (
 	// EventualFactor is the amount of time by which the priorities on
 	// eventual tasks are multiplied.
 	EventualFactor = float64(time.Hour * 72)
+
+	// EventualThreshold is the about by which a priority value must
+	// be increased in order for it to be colorized differently.
+	EventualThreshold = 1
 )
 
 type DefiniteTask struct {
@@ -60,37 +64,22 @@ func (t *DefiniteTask) Match(term string) bool {
 // String allows DefiniteTasks to be stringified easily. If the global
 // Context specifies that color is allowed, it will be used.
 func (t *DefiniteTask) String() string {
-	// Colorize if appropriate.
-	if Ctx.Colors {
-		// Find the appropriate color based on the imminence of the
-		// due date.
-		col := ColorForDate(t.DueBy, ColorThreshold)
+	// Get a function for colorizing the string if appropriate. If
+	// Ctx.Colors is not set, then it will do nothing.
+	col := BrushConditionally(Ctx, ColorForDate(t.DueBy, ColorThreshold))
 
-		return fmt.Sprintf(
-			col("(%d) %s - %s")+"\n",
-			t.Priority, t.DueBy.Format(DueFmt), t.Name)
-	}
-
-	return fmt.Sprintf("(%d) %s - %s\n",
+	return fmt.Sprintf(col("(%d) %s - %s\n"),
 		t.Priority, t.DueBy.Format(DueFmt), t.Name)
 }
 
 // LongString allows Tasks to be stringified in full, including the
 // description. Its behavior is similar to String.
 func (t *DefiniteTask) LongString() string {
-	// Colorize if appropriate.
-	if Ctx.Colors {
-		// Find the appropriate color based on the imminence of the
-		// due date.
-		col := ColorForDate(t.DueBy, ColorThreshold)
+	// Get a function for colorizing the string if appropriate. If
+	// Ctx.Colors is not set, then it will do nothing.
+	col := BrushConditionally(Ctx, ColorForDate(t.DueBy, ColorThreshold))
 
-		return fmt.Sprintf(
-			col("(%d) %s - %s")+"\n\t%s\n",
-			t.Priority, t.DueBy.Format(DueFmt),
-			t.Name, t.Description)
-	}
-
-	return fmt.Sprintf("(%d) %s - %s\n\t%s\n",
+	return fmt.Sprintf(col("(%d) %s - %s\n\t%s\n"),
 		t.Priority, t.DueBy.Format(DueFmt),
 		t.Name, t.Description)
 }
@@ -112,10 +101,20 @@ func (t *EventualTask) Match(term string) bool {
 }
 
 func (t *EventualTask) String() string {
-	return fmt.Sprintf("(%d) - %s\n", t.Priority, t.Name)
+	// Get a function for colorizing the string if appropriate. If
+	// Ctx.Colors is not set, then it will do nothing.
+	col := BrushConditionally(Ctx,
+		ColorForPriority(t.Priority, EventualThreshold))
+
+	return fmt.Sprintf(col("(%d) - %s\n"), t.Priority, t.Name)
 }
 
 func (t *EventualTask) LongString() string {
-	return fmt.Sprintf("(%d) - %s\n\t%s\n",
+	// Get a function for colorizing the string if appropriate. If
+	// Ctx.Colors is not set, then it will do nothing.
+	col := BrushConditionally(Ctx,
+		ColorForPriority(t.Priority, EventualThreshold))
+
+	return fmt.Sprintf(col("(%d) - %s\n\t%s\n"),
 		t.Priority, t.Name, t.Description)
 }
