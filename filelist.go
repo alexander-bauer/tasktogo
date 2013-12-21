@@ -23,9 +23,9 @@ func ReadList(r io.Reader) (l List, err error) {
 	fl := fileList{}
 	err = json.NewDecoder(r).Decode(&fl)
 	if err != nil {
-		return
+		return nil, err
 	}
-	return fl.List(), err
+	return fl.List(), nil
 }
 
 // Write JSON-encodes the List to the given io.Writer by first

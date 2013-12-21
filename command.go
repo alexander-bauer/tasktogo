@@ -21,6 +21,8 @@ var (
 	ErrUnknownCommand = errors.New("unknown command")
 
 	ErrMissingPriority = errors.New("no priority argument given")
+
+	ErrNoTasks = errors.New("no tasks in list")
 )
 
 type Command struct {
@@ -99,6 +101,14 @@ func (c *Command) CmdExit(ctx *Context) (err error) {
 
 func (c *Command) CmdList(ctx *Context) (err error) {
 	glog.V(2).Infoln("User invoked list")
+
+	// If the List is new, check if there are any items. If not,
+	// report that there are none and the user is trying to list an
+	// empty file.
+	if ctx.newlist && len(ctx.List) == 0 {
+		glog.Warningf("User tried to list tasks on empty file\n")
+		return ErrNoTasks
+	}
 
 	// Only show the first n tasks, but make sure that n doesn't go
 	// out of bounds. Also, if n is -1, show all tasks.

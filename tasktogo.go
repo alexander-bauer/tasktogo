@@ -56,6 +56,10 @@ type Context struct {
 	// modified is a flag which implies that the List should be saved
 	// to its file before exiting.
 	modified bool
+
+	// newlist is a flag which implies that the List does not yet
+	// exist on the filesystem.
+	newlist bool
 }
 
 func (ctx *Context) Save() {
@@ -95,7 +99,7 @@ func main() {
 	// Attempt to load the given task list.
 	var err error
 	Ctx.loadpath = os.ExpandEnv(*FlagList)
-	Ctx.List, err = ReadListFile(Ctx.loadpath)
+	Ctx.List, Ctx.newlist, err = ReadListFile(Ctx.loadpath)
 	if err != nil {
 		msg := fmt.Sprintf("Could not read task list: %s\n", err)
 		glog.Error(msg)
