@@ -40,6 +40,7 @@ var RunMap = map[string]Runner{
 	"h":          (*Command).CmdHelp,
 	"exit":       (*Command).CmdExit,
 	"quit":       (*Command).CmdExit,
+	"q":          (*Command).CmdExit,
 	"list":       (*Command).CmdList,
 	"l":          (*Command).CmdList,
 	"add":        (*Command).CmdAdd,
