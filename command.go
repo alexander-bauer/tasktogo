@@ -124,8 +124,8 @@ func (c *Command) CmdList(ctx *Context) (err error) {
 		n = ctx.MaxListItems
 	}
 
-	if n >= len(ctx.List) || n < 0 {
-		n = len(ctx.List) - 1
+	if n > len(ctx.List) || n < 0 {
+		n = len(ctx.List)
 	}
 
 	for _, task := range ctx.List[:n] {
