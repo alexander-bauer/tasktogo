@@ -8,9 +8,11 @@ import (
 )
 
 const (
-	// DueFmt is the date format with which due dates are displayed in
-	// stringified Tasks.
-	DueFmt = "Monday, Jan 02, 15:04"
+	// RelFmt and DueFmt are time format strings used for formatting
+	// tasks in the list view. The former is used if the due date is
+	// relatively nearby, and the latter is used if not.
+	RelFmt = "%s at 15:04"
+	DueFmt = "Jan 02, 15:04"
 )
 
 var (
