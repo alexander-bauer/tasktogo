@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/SashaCrofter/reltime"
 	"math"
 	"strings"
 	"time"
@@ -69,7 +70,7 @@ func (t *DefiniteTask) String() string {
 	col := BrushConditionally(Ctx, ColorForDate(t.DueBy, ColorThreshold))
 
 	return fmt.Sprintf(col("(%d) %s - %s\n"),
-		t.Priority, t.DueBy.Format(DueFmt), t.Name)
+		t.Priority, reltime.FormatRelative(DueFmt, t.DueBy), t.Name)
 }
 
 // LongString allows Tasks to be stringified in full, including the
@@ -80,7 +81,7 @@ func (t *DefiniteTask) LongString() string {
 	col := BrushConditionally(Ctx, ColorForDate(t.DueBy, ColorThreshold))
 
 	return fmt.Sprintf(col("(%d) %s - %s\n\t%s\n"),
-		t.Priority, t.DueBy.Format(DueFmt),
+		t.Priority, reltime.FormatRelative(DueFmt, t.DueBy),
 		t.Name, t.Description)
 }
 
