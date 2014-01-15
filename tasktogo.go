@@ -37,8 +37,11 @@ type Context struct {
 	// Prompt output.
 	Output, Prompt io.Writer
 
-	// List is task list that contains all known tasks and associated
-	// data.
+	// fileList is raw data type used to generate the task list that
+	// contains all known tasks and associated data.
+	fileList
+
+	// List is generated from fileList between each command.
 	List
 
 	// MaxListItems is the maximum number of tasks that will be
@@ -53,19 +56,19 @@ type Context struct {
 	// loaded.
 	loadpath string
 
-	// modified is a flag which implies that the List should be saved
-	// to its file before exiting.
+	// modified is a flag which implies that the fileList should be
+	// saved to its file before exiting.
 	modified bool
 
-	// newlist is a flag which implies that the List does not yet
+	// newlist is a flag which implies that the fileList does not yet
 	// exist on the filesystem.
 	newlist bool
 }
 
 func (ctx *Context) Save() {
-	// Only attempt to save if the List has been modified.
+	// Only attempt to save if the fileList has been modified.
 	if ctx.modified {
-		err := ctx.List.WriteFile(ctx.loadpath)
+		err := ctx.fileList.WriteFile(ctx.loadpath)
 		if err != nil {
 			glog.Errorf("Could not save list: %s\n", err)
 		} else {
@@ -99,7 +102,7 @@ func main() {
 	// Attempt to load the given task list.
 	var err error
 	Ctx.loadpath = os.ExpandEnv(*FlagList)
-	Ctx.List, Ctx.newlist, err = ReadListFile(Ctx.loadpath)
+	Ctx.fileList, Ctx.newlist, err = ReadListFile(Ctx.loadpath)
 	if err != nil {
 		msg := fmt.Sprintf("Could not read task list: %s\n", err)
 		glog.Error(msg)
@@ -128,6 +131,9 @@ func runCommandMode(ctx *Context) int {
 		glog.Warningf("User error: %s\n", err)
 		return 1
 	}
+
+	// Re-generate the List.
+	ctx.List = ctx.fileList.List()
 
 	// Run the command.
 	err = c.Run(c, ctx)
@@ -176,6 +182,9 @@ func runInteractiveMode(ctx *Context) int {
 			glog.Warningf("User error: %s\n", err)
 			continue
 		}
+
+		// Re-generate the List.
+		ctx.List = ctx.fileList.List()
 
 		err = c.Run(c, ctx)
 		if err != nil {

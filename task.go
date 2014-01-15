@@ -25,6 +25,16 @@ type Task interface {
 	// LongString is similar to String, but includes the description
 	// if appropriate.
 	LongString() string
+
+	// Done is used to remove a Task from being displayed again after
+	// it has been marked completed by the user.
+	Done(fileList)
+}
+
+type TaskContainer interface {
+	// Tasks returns a representation of the TaskContainer as a slice
+	// of Tasks, which may be nil.
+	Tasks() []Task
 }
 
 const (
@@ -41,6 +51,11 @@ type DefiniteTask struct {
 	Priority          int
 	DueBy             time.Time
 	Name, Description string
+}
+
+// Tasks causes DefiniteTask to satisfy the TaskContainer interface.
+func (t *DefiniteTask) Tasks() []Task {
+	return []Task{t}
 }
 
 // Nice calculates the numerical nice value for a DefiniteTask, so
@@ -85,11 +100,24 @@ func (t *DefiniteTask) LongString() string {
 		t.Name, t.Description)
 }
 
+func (t *DefiniteTask) Done(fl fileList) {
+	for i, container := range fl.Definite {
+		if container == t {
+			fl.Definite = append(fl.Definite[:i], fl.Definite[i+1:]...)
+		}
+	}
+}
+
 // EventualTask floats around in the todo list, remaining at a
 // constant Nice value.
 type EventualTask struct {
 	Priority          int
 	Name, Description string
+}
+
+// Tasks causes EventualTask to satisfy the TaskContainer interface.
+func (t *EventualTask) Tasks() []Task {
+	return []Task{t}
 }
 
 func (t *EventualTask) Nice() int {
@@ -118,4 +146,12 @@ func (t *EventualTask) LongString() string {
 
 	return fmt.Sprintf(col("(%d) - %s\n\t%s\n"),
 		t.Priority, t.Name, t.Description)
+}
+
+func (t *EventualTask) Done(fl fileList) {
+	for i, container := range fl.Eventual {
+		if container == t {
+			fl.Eventual = append(fl.Eventual[:i], fl.Eventual[i+1:]...)
+		}
+	}
 }

@@ -2,8 +2,6 @@ package main
 
 import (
 	"errors"
-	"github.com/golang/glog"
-	"os"
 	"sort"
 )
 
@@ -20,35 +18,6 @@ var (
 )
 
 type List []Task
-
-// ReadListFile wraps ReadList and returns a List decoded from a
-// JSON-encoded fileList type. If the file given does not exist, then
-// isNew will be true.
-func ReadListFile(path string) (l List, isNew bool, err error) {
-	// Try to read the file. If the error is that the file doesn't
-	// exist, return an empty list, or otherwise return an error.
-	f, err := os.Open(path)
-	if os.IsNotExist(err) {
-		glog.Infof("List file %q doesn't exist, using blank\n", path)
-		return List{}, true, nil
-	} else if err != nil {
-		return
-	}
-	defer f.Close()
-
-	l, err = ReadList(f)
-	return l, false, err
-}
-
-func (l List) WriteFile(path string) error {
-	f, err := os.Create(path)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	return l.Write(f)
-}
 
 // Sort is a convenience function that invokes sort.Sort() on the
 // given List.
