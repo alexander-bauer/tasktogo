@@ -183,8 +183,7 @@ func (c *Command) CmdAdd(ctx *Context) (err error) {
 
 	// Now, add the task to the list, sort it, and set the "modified"
 	// flag.
-	ctx.List = append(ctx.List, t)
-	ctx.Sort()
+	ctx.fileList.Definite = append(ctx.fileList.Definite, t)
 	ctx.modified = true
 	return nil
 }
@@ -219,8 +218,7 @@ func (c *Command) CmdEventually(ctx *Context) (err error) {
 
 	// TODO: retrieve a description somehow
 
-	ctx.List = append(ctx.List, t)
-	ctx.Sort()
+	ctx.fileList.Eventual = append(ctx.fileList.Eventual, t)
 	ctx.modified = true
 	return nil
 }
@@ -234,11 +232,10 @@ func (c *Command) CmdDone(ctx *Context) (err error) {
 
 	// Iterate through the List and remove the first Task for which
 	// the searchterm matches the start of the string.
-	for n, task := range ctx.List {
+	for _, task := range ctx.List {
 		if task.Match(searchterm) {
-			// Reslice around the task to be removed.
-			ctx.List = append(ctx.List[:n], ctx.List[n+1:]...)
-			ctx.modified = true
+			task.Done(&Ctx.fileList)
+			Ctx.modified = true
 			return nil
 		}
 	}

@@ -28,7 +28,7 @@ type Task interface {
 
 	// Done is used to remove a Task from being displayed again after
 	// it has been marked completed by the user.
-	Done(fileList)
+	Done(*fileList)
 }
 
 type TaskContainer interface {
@@ -100,7 +100,7 @@ func (t *DefiniteTask) LongString() string {
 		t.Name, t.Description)
 }
 
-func (t *DefiniteTask) Done(fl fileList) {
+func (t *DefiniteTask) Done(fl *fileList) {
 	for i, container := range fl.Definite {
 		if container == t {
 			fl.Definite = append(fl.Definite[:i], fl.Definite[i+1:]...)
@@ -148,7 +148,7 @@ func (t *EventualTask) LongString() string {
 		t.Priority, t.Name, t.Description)
 }
 
-func (t *EventualTask) Done(fl fileList) {
+func (t *EventualTask) Done(fl *fileList) {
 	for i, container := range fl.Eventual {
 		if container == t {
 			fl.Eventual = append(fl.Eventual[:i], fl.Eventual[i+1:]...)
