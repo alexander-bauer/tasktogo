@@ -10,8 +10,9 @@ import (
 
 // fileList is the structure wrapping task lists to be stored on-disk.
 type fileList struct {
-	Definite []*DefiniteTask
-	Eventual []*EventualTask
+	Definite  []*DefiniteTask
+	Eventual  []*EventualTask
+	Recurring []*RecurringTaskGenerator
 }
 
 var (
@@ -70,6 +71,9 @@ func (fl fileList) List() (l List) {
 		l = append(l, t.Tasks()...)
 	}
 	for _, t := range fl.Eventual {
+		l = append(l, t.Tasks()...)
+	}
+	for _, t := range fl.Recurring {
 		l = append(l, t.Tasks()...)
 	}
 

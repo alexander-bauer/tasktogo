@@ -155,3 +155,82 @@ func (t *EventualTask) Done(fl *fileList) {
 		}
 	}
 }
+
+// RecurringTaskGenerator is a generator tasks that occur at a regular
+// interval.
+type RecurringTaskGenerator struct {
+	DoneUntil time.Time
+	Except    []time.Time
+
+	Start, End time.Time
+	Delay      time.Duration
+
+	// Spawn is a template for the generated RecurringTask with its
+	// parent, occurrence counter, and due date unset. Its name and
+	// description can optionally be printf format strings, which are
+	// sprinted with the occurrence number (1-indexed) as the
+	// argument.
+	Spawn RecurringTask
+}
+
+// Tasks allows the RecurringTaskGenerator to produce all of its child
+// tasks based on stored parameters.
+func (t *RecurringTaskGenerator) Tasks() []Task {
+	// TODO implement here
+	return nil
+}
+
+// Done modifies the state of the generator such that a Task with the
+// given dueby date will not be produced again.
+func (t *RecurringTaskGenerator) Done(dueby time.Time) {
+	// TODO implement here
+}
+
+type RecurringTask struct {
+	// parent is a pointer to the RecurringTaskGenerator that
+	// generated this task.
+	parent *RecurringTaskGenerator
+
+	// Occurrence is the 1-indexed occurrence number of this task.
+	Occurrence int
+
+	Priority          int
+	DueBy             time.Time
+	Name, Description string
+}
+
+func (t *RecurringTask) Nice() int {
+	return int(
+		math.Log(float64(t.Priority)) *
+			float64(t.DueBy.Sub(time.Now())))
+}
+
+// Match checks whether the given search term matches the task's title
+// case-insensitively and returns the result.
+func (t *RecurringTask) Match(term string) bool {
+	return strings.HasPrefix(
+		strings.ToLower(t.Name), strings.ToLower(term))
+}
+
+func (t *RecurringTask) String() string {
+	// Get a function for colorizing the string if appropriate. If
+	// Ctx.Colors is not set, then it will do nothing.
+	col := BrushConditionally(Ctx, ColorForDate(t.DueBy, ColorThreshold))
+
+	return fmt.Sprintf(col("(%d) %s - %s\n"),
+		t.Priority, reltime.FormatRelative(RelFmt, DueFmt, t.DueBy), t.Name)
+}
+
+func (t *RecurringTask) LongString() string {
+	// Get a function for colorizing the string if appropriate. If
+	// Ctx.Colors is not set, then it will do nothing.
+	col := BrushConditionally(Ctx, ColorForDate(t.DueBy, ColorThreshold))
+
+	return fmt.Sprintf(col("(%d) %s - %s\n\t%s\n"),
+		t.Priority, reltime.FormatRelative(RelFmt, DueFmt, t.DueBy),
+		t.Name, t.Description)
+}
+
+func (t *RecurringTask) Done(fl *fileList) {
+	t.parent.Done(t.DueBy)
+}
