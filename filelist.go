@@ -76,14 +76,3 @@ func (fl fileList) List() (l List) {
 	l.Sort()
 	return l
 }
-
-// Remove searches the slice of containers for the given Task, and
-// once found, removes it, and returns the new slice.
-func Remove(containers []TaskContainer, t TaskContainer) []TaskContainer {
-	for i, container := range containers {
-		if container == t {
-			return append(containers[:i], containers[i+1:]...)
-		}
-	}
-	return containers
-}
