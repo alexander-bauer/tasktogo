@@ -159,8 +159,12 @@ func (t *EventualTask) Done(fl *fileList) {
 // RecurringTaskGenerator is a generator tasks that occur at a regular
 // interval.
 type RecurringTaskGenerator struct {
-	DoneUntil time.Time
-	Except    []time.Time
+	// LastCompleted marks the most recent task ID (1-indexed) to have
+	// been marked complete.
+	LastCompleted int
+	// Except is a slice containing all task IDs that are less than
+	// LastCompleted, but which have *not* been marked complete.
+	Except []int
 
 	Start, End time.Time
 	Delay      time.Duration
@@ -176,72 +180,39 @@ type RecurringTaskGenerator struct {
 // Tasks allows the RecurringTaskGenerator to produce all of its child
 // tasks based on stored parameters.
 func (g *RecurringTaskGenerator) Tasks() []Task {
-	// Find the time to start generating from. If the Start is not
-	// after the DoneUntil marker, use the DoneUntil marker plus the
-	// duration. Note that it is done this way because it is possible
-	// for the start date to be the same as the DoneUntil marker.
-	start := g.Start
-	if !start.After(g.DoneUntil) {
-		start = g.DoneUntil.Add(g.Delay)
+	// Find the last task ID that will be generated.
+
+	// If the current time is less than the End time, add one extra
+	// task for the one currently in session.
+	var lastID int
+	endTime := time.Now()
+	if !g.End.IsZero() && endTime.After(g.End) {
+		endTime = g.End
+	} else {
+		lastID++
 	}
 
-	// Find the number of tasks spawned since the start time by
-	// finding the difference between the start time and the current
-	// time, and dividing by the Delay. Note that the start date is
-	// always inclusive.
-	numBetween := int(time.Now().Sub(start)/g.Delay) + 1
-	if numBetween <= 0 {
-		numBetween = 1
-	}
-	println(numBetween)
+	// Find the number of instances of the delay that have happened by
+	// the time between g.Start and current time.
+	lastID += int(endTime.Sub(g.Start)/g.Delay) + 1
 
-	// Find the time to end generating. If the End time comes before
-	// the current time, use it instead. If not, then we will include
-	// the task whose duration includes the current time.
-	end := time.Now()
-	if !g.End.IsZero() && end.After(g.End) {
-		end = g.End
-	} else if time.Now().After(start) {
-		// If the time period has not ended, then add another task for
-		// the one currently in progress, so long as we have actually
-		// started the period already.
-		numBetween++
-	}
-	println(numBetween)
-
-	// Also include the number of exceptions, and the next occurrence.
-	numTasks := len(g.Except) + numBetween + 1
-	tasks := make([]Task, 0, numTasks)
+	tasks := make([]Task, 0, lastID-g.LastCompleted+len(g.Except))
 
 	// Add all the exceptions.
-	for _, dueby := range g.Except {
+	for _, id := range g.Except {
 		tasks = append(tasks,
 			g.SpawnTask(
-				int(dueby.Sub(g.Start)/g.Delay)+1, // occurrence
-				dueby))
+				id, // occurrence
+				g.Start.Add(time.Duration(id-1)*g.Delay)))
 	}
-
-	// Find the number of tasks that occurred before the start marker
-	// marker, inclusive, so that we can get the occurrence number
-	// correct. We don't want it going negative, so we need to handle
-	// the start == g.Start case specially.
-	numBefore := int(start.Sub(g.Start) / g.Delay)
-	if numBefore > 1 {
-		numBefore--
-	}
-	println(numBefore)
 
 	// Add every task since the latest one that's been marked
 	// completed.
-	dueby := start.Add(time.Duration(numBefore-1) * g.Delay)
-	for i := 0; i < numBetween; i++ {
+	for id := g.LastCompleted; id < lastID; id++ {
 		tasks = append(tasks,
 			g.SpawnTask(
-				i+numBefore+1,
-				dueby))
-
-		// Increment the dueby counter.
-		dueby = dueby.Add(g.Delay)
+				id+1,
+				g.Start.Add(time.Duration(id)*g.Delay)))
 	}
 
 	return tasks
