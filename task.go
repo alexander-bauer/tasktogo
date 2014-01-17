@@ -175,14 +175,72 @@ type RecurringTaskGenerator struct {
 
 // Tasks allows the RecurringTaskGenerator to produce all of its child
 // tasks based on stored parameters.
-func (t *RecurringTaskGenerator) Tasks() []Task {
-	// TODO implement here
-	return nil
+func (g *RecurringTaskGenerator) Tasks() []Task {
+	// Find the time to start generating from. If the Start time comes
+	// before the DoneUntil marker, use the DoneUntil marker.
+	start := g.Start
+	if g.DoneUntil.After(start) {
+		start = g.DoneUntil
+	}
+
+	// Find the number of tasks spawned since the start time by
+	// finding the difference between the start time and the current
+	// time, and dividing by the Delay.
+	numBetween := int(time.Now().Sub(start) / g.Delay)
+	if numBetween < 0 {
+		numBetween = 0
+	}
+
+	// Also include the number of exceptions, and the next occurrence.
+	numTasks := len(g.Except) + numBetween + 1
+	tasks := make([]Task, 0, numTasks)
+
+	for _, dueby := range g.Except {
+		tasks = append(tasks,
+			g.SpawnTask(
+				int(dueby.Sub(g.Start)/g.Delay)+1, // occurrence
+				dueby))
+	}
+
+	// Find the number of tasks that occurred before the start marker
+	// marker, inclusive, so that we can get the occurrence number
+	// correct.
+	numBefore := int(start.Sub(g.Start)/g.Delay) + 1
+
+	dueby := start.Add(time.Duration(numBefore) * g.Delay)
+	for i := 0; i < numBetween+1; i++ {
+		tasks = append(tasks,
+			g.SpawnTask(
+				i+numBefore,
+				dueby))
+
+		dueby = dueby.Add(g.Delay)
+	}
+
+	return tasks
+}
+
+func (g *RecurringTaskGenerator) SpawnTask(occurrence int,
+	dueby time.Time) *RecurringTask {
+
+	// Copy the Spawn and set the parent.
+	newtask := g.Spawn
+	newtask.parent = g
+
+	// Set the fields from the arguments.
+	newtask.Occurrence = occurrence
+	newtask.DueBy = dueby
+
+	// Sprintf the remaining fields.
+	newtask.Name = fmt.Sprintf(g.Spawn.Name, occurrence)
+	newtask.Description = fmt.Sprintf(g.Spawn.Description, occurrence)
+
+	return &newtask
 }
 
 // Done modifies the state of the generator such that a Task with the
 // given dueby date will not be produced again.
-func (t *RecurringTaskGenerator) Done(dueby time.Time) {
+func (g *RecurringTaskGenerator) Done(dueby time.Time) {
 	// TODO implement here
 }
 
