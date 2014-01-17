@@ -176,25 +176,44 @@ type RecurringTaskGenerator struct {
 // Tasks allows the RecurringTaskGenerator to produce all of its child
 // tasks based on stored parameters.
 func (g *RecurringTaskGenerator) Tasks() []Task {
-	// Find the time to start generating from. If the Start time comes
-	// before the DoneUntil marker, use the DoneUntil marker.
+	// Find the time to start generating from. If the Start is not
+	// after the DoneUntil marker, use the DoneUntil marker plus the
+	// duration. Note that it is done this way because it is possible
+	// for the start date to be the same as the DoneUntil marker.
 	start := g.Start
-	if g.DoneUntil.After(start) {
-		start = g.DoneUntil
+	if !start.After(g.DoneUntil) {
+		start = g.DoneUntil.Add(g.Delay)
 	}
 
 	// Find the number of tasks spawned since the start time by
 	// finding the difference between the start time and the current
-	// time, and dividing by the Delay.
-	numBetween := int(time.Now().Sub(start) / g.Delay)
-	if numBetween < 0 {
-		numBetween = 0
+	// time, and dividing by the Delay. Note that the start date is
+	// always inclusive.
+	numBetween := int(time.Now().Sub(start)/g.Delay) + 1
+	if numBetween <= 0 {
+		numBetween = 1
 	}
+	println(numBetween)
+
+	// Find the time to end generating. If the End time comes before
+	// the current time, use it instead. If not, then we will include
+	// the task whose duration includes the current time.
+	end := time.Now()
+	if !g.End.IsZero() && end.After(g.End) {
+		end = g.End
+	} else if time.Now().After(start) {
+		// If the time period has not ended, then add another task for
+		// the one currently in progress, so long as we have actually
+		// started the period already.
+		numBetween++
+	}
+	println(numBetween)
 
 	// Also include the number of exceptions, and the next occurrence.
 	numTasks := len(g.Except) + numBetween + 1
 	tasks := make([]Task, 0, numTasks)
 
+	// Add all the exceptions.
 	for _, dueby := range g.Except {
 		tasks = append(tasks,
 			g.SpawnTask(
@@ -204,16 +223,24 @@ func (g *RecurringTaskGenerator) Tasks() []Task {
 
 	// Find the number of tasks that occurred before the start marker
 	// marker, inclusive, so that we can get the occurrence number
-	// correct.
-	numBefore := int(start.Sub(g.Start)/g.Delay) + 1
+	// correct. We don't want it going negative, so we need to handle
+	// the start == g.Start case specially.
+	numBefore := int(start.Sub(g.Start) / g.Delay)
+	if numBefore > 1 {
+		numBefore--
+	}
+	println(numBefore)
 
-	dueby := start.Add(time.Duration(numBefore) * g.Delay)
-	for i := 0; i < numBetween+1; i++ {
+	// Add every task since the latest one that's been marked
+	// completed.
+	dueby := start.Add(time.Duration(numBefore-1) * g.Delay)
+	for i := 0; i < numBetween; i++ {
 		tasks = append(tasks,
 			g.SpawnTask(
-				i+numBefore,
+				i+numBefore+1,
 				dueby))
 
+		// Increment the dueby counter.
 		dueby = dueby.Add(g.Delay)
 	}
 
@@ -241,7 +268,7 @@ func (g *RecurringTaskGenerator) SpawnTask(occurrence int,
 // Done modifies the state of the generator such that a Task with the
 // given dueby date will not be produced again.
 func (g *RecurringTaskGenerator) Done(dueby time.Time) {
-	// TODO implement here
+	//
 }
 
 type RecurringTask struct {
