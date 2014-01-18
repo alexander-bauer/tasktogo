@@ -274,9 +274,29 @@ func (g *RecurringTaskGenerator) FindLastID(t time.Time) (id int) {
 }
 
 // Done modifies the state of the generator such that a Task with the
-// given dueby date will not be produced again.
-func (g *RecurringTaskGenerator) Done(dueby time.Time) {
-	//
+// ID date will not be produced again.
+func (g *RecurringTaskGenerator) Done(id int) {
+	// In the simplest case, the id is greater than the last completed
+	// task, so the counter can simply be incremented.
+	if id > g.LastCompleted {
+		// For each ID inbetween the new ID and the last completed
+		// one, add it to the list of exceptions.
+		for i := g.LastCompleted + 1; i < id; i++ {
+			g.Except = append(g.Except, i)
+		}
+		// Set the LastCompleted marker.
+		g.LastCompleted = id
+
+	} else {
+		// If it is not greater than the last completed ID, then it
+		// should be considered to be an exception, so locate and
+		// remove it from the list.
+		for i, exceptionID := range g.Except {
+			if exceptionID == id {
+				g.Except = append(g.Except[:i], g.Except[i+1:]...)
+			}
+		}
+	}
 }
 
 type RecurringTask struct {
@@ -325,5 +345,5 @@ func (t *RecurringTask) LongString() string {
 }
 
 func (t *RecurringTask) Done(fl *fileList) {
-	t.parent.Done(t.DueBy)
+	t.parent.Done(t.Occurrence)
 }
