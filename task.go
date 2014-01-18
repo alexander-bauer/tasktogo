@@ -167,7 +167,7 @@ type RecurringTaskGenerator struct {
 	Except []int
 
 	Start, End time.Time
-	Delay      time.Duration
+	Delay      []time.Duration
 
 	// Spawn is a template for the generated RecurringTask with its
 	// parent, occurrence counter, and due date unset. Its name and
@@ -183,20 +183,21 @@ func (g *RecurringTaskGenerator) Tasks() []Task {
 	// Find the last task ID that will be generated.
 
 	// If the current time is less than the End time, add one extra
-	// task for the one currently in session.
-	var lastID int
+	// task for the one currently in session, as long as the session
+	// has actually started.
+	var finalID int
 	endTime := time.Now()
 	if !g.End.IsZero() && endTime.After(g.End) {
 		endTime = g.End
-	} else {
-		lastID++
+	} else if !g.Start.After(endTime) {
+		finalID++
 	}
 
-	// Find the number of instances of the delay that have happened by
-	// the time between g.Start and current time.
-	lastID += int(endTime.Sub(g.Start)/g.Delay) + 1
+	// Find the number of instances of the delays that have happened
+	// by the time between g.Start and current time.
+	finalID += g.FindLastID(endTime)
 
-	tasks := make([]Task, 0, lastID-g.LastCompleted+len(g.Except))
+	tasks := make([]Task, 0, finalID-g.LastCompleted+len(g.Except))
 
 	// Add all the exceptions.
 	for _, id := range g.Except {
@@ -205,7 +206,7 @@ func (g *RecurringTaskGenerator) Tasks() []Task {
 
 	// Add every task since the latest one that's been marked
 	// completed.
-	for id := g.LastCompleted; id < lastID; id++ {
+	for id := g.LastCompleted; id < finalID; id++ {
 		tasks = append(tasks, g.SpawnTask(id+1))
 	}
 
@@ -213,7 +214,6 @@ func (g *RecurringTaskGenerator) Tasks() []Task {
 }
 
 func (g *RecurringTaskGenerator) SpawnTask(occurrence int) *RecurringTask {
-
 	// Copy the Spawn and set the parent.
 	newtask := g.Spawn
 	newtask.parent = g
@@ -230,7 +230,47 @@ func (g *RecurringTaskGenerator) SpawnTask(occurrence int) *RecurringTask {
 }
 
 func (g *RecurringTaskGenerator) DueByID(occurrence int) time.Time {
-	return g.Start.Add(time.Duration(occurrence-1) * g.Delay)
+	// Calculate the number of full turnovers of the delay schedule
+	// the occurence is at, as well as its progress into the current
+	// one.
+	occurrence -= 1
+	if occurrence < 0 {
+		return time.Time{}
+	}
+	full, remaining := occurrence/len(g.Delay), occurrence%len(g.Delay)
+
+	return g.Start.Add(time.Duration(full)*g.SumDelay(len(g.Delay)) +
+		g.SumDelay(remaining))
+}
+
+func (g *RecurringTaskGenerator) SumDelay(lastIndex int) time.Duration {
+	var sum time.Duration
+	for _, delay := range g.Delay[:lastIndex] {
+		sum += delay
+	}
+	return sum
+}
+
+func (g *RecurringTaskGenerator) FindLastID(t time.Time) (id int) {
+	// First, find the number of complete delay schedule rollovers
+	// there have been, and multiply that by the number of tasks in
+	// the schedule. We add one because it's 1-indexed.
+	id = int(t.Sub(g.Start)/g.SumDelay(len(g.Delay))) + 1
+
+	// Next, find the number of tasks that have occurred in the
+	// current schedule by looping through each and finding the first
+	// one that occurs after the given time.
+	taskTime := g.DueByID(id)
+	for i, delay := range g.Delay {
+		taskTime = taskTime.Add(delay)
+		if taskTime.After(t) {
+			// Add the index of the item in the schedule.
+			id += i
+			break
+		}
+	}
+
+	return id
 }
 
 // Done modifies the state of the generator such that a Task with the
