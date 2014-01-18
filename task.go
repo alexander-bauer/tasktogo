@@ -200,26 +200,19 @@ func (g *RecurringTaskGenerator) Tasks() []Task {
 
 	// Add all the exceptions.
 	for _, id := range g.Except {
-		tasks = append(tasks,
-			g.SpawnTask(
-				id, // occurrence
-				g.Start.Add(time.Duration(id-1)*g.Delay)))
+		tasks = append(tasks, g.SpawnTask(id))
 	}
 
 	// Add every task since the latest one that's been marked
 	// completed.
 	for id := g.LastCompleted; id < lastID; id++ {
-		tasks = append(tasks,
-			g.SpawnTask(
-				id+1,
-				g.Start.Add(time.Duration(id)*g.Delay)))
+		tasks = append(tasks, g.SpawnTask(id+1))
 	}
 
 	return tasks
 }
 
-func (g *RecurringTaskGenerator) SpawnTask(occurrence int,
-	dueby time.Time) *RecurringTask {
+func (g *RecurringTaskGenerator) SpawnTask(occurrence int) *RecurringTask {
 
 	// Copy the Spawn and set the parent.
 	newtask := g.Spawn
@@ -227,13 +220,17 @@ func (g *RecurringTaskGenerator) SpawnTask(occurrence int,
 
 	// Set the fields from the arguments.
 	newtask.Occurrence = occurrence
-	newtask.DueBy = dueby
+	newtask.DueBy = g.DueByID(occurrence)
 
 	// Sprintf the remaining fields.
 	newtask.Name = fmt.Sprintf(g.Spawn.Name, occurrence)
 	newtask.Description = fmt.Sprintf(g.Spawn.Description, occurrence)
 
 	return &newtask
+}
+
+func (g *RecurringTaskGenerator) DueByID(occurrence int) time.Time {
+	return g.Start.Add(time.Duration(occurrence-1) * g.Delay)
 }
 
 // Done modifies the state of the generator such that a Task with the
