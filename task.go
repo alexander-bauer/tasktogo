@@ -263,7 +263,14 @@ func (g *RecurringTaskGenerator) FindLastID(t time.Time) (id int) {
 	taskTime := g.DueByID(id)
 	for i, delay := range g.Delay {
 		taskTime = taskTime.Add(delay)
-		if taskTime.After(t) {
+		// If the task occurs after the End time (if supplied), then
+		// the task immediately before this time is the last
+		// one. Otherwise, if the task occurs after t, that task is
+		// the last one.
+		if !g.End.IsZero() && taskTime.After(g.End) {
+			id += i - 1
+			break
+		} else if taskTime.After(t) {
 			// Add the index of the item in the schedule.
 			id += i
 			break
