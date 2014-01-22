@@ -13,7 +13,8 @@ import (
 import ()
 
 const (
-	DueFormat = "Jan _2 15:04"
+	DueFormat  = "Jan _2 15:04"
+	FullFormat = "2006-01-02 15:04"
 )
 
 var (
@@ -49,6 +50,8 @@ var RunMap = map[string]Runner{
 	"a":          (*Command).CmdAdd,
 	"eventually": (*Command).CmdEventually,
 	"e":          (*Command).CmdEventually,
+	"recurring":  (*Command).CmdRecurring,
+	"r":          (*Command).CmdRecurring,
 	"done":       (*Command).CmdDone,
 	"d":          (*Command).CmdDone,
 }
@@ -88,6 +91,7 @@ func (c *Command) CmdHelp(ctx *Context) (err error) {
 	fmt.Fprintf(ctx.Output, "    list [maxItems]\t\t\t\t- list all tasks\n")
 	fmt.Fprintf(ctx.Output, "    add name priority month day hr:min\t- add a task\n")
 	fmt.Fprintf(ctx.Output, "    eventually name priority\t\t- add an eventual task\n")
+	fmt.Fprintf(ctx.Output, "    recurring name priority start [end] delay[,delay] - add an eventual task\n")
 	fmt.Fprintf(ctx.Output, "    done name\t\t\t\t- complete a task\n")
 
 	return nil
@@ -220,6 +224,107 @@ func (c *Command) CmdEventually(ctx *Context) (err error) {
 
 	ctx.fileList.Eventual = append(ctx.fileList.Eventual, t)
 	ctx.modified = true
+	return nil
+}
+
+func (c *Command) CmdRecurring(ctx *Context) (err error) {
+	glog.V(2).Infoln("User invoked recurring")
+
+	t := &RecurringTaskGenerator{}
+
+	// The format for this command is
+	//
+	//     recurring task name priority start [end] delay[,delay]
+	//
+	// The start and end arguments are three fields each - Jan 27
+	// 12:00, for example. We need to loop from the back, processing
+	// first the delay(s), then the end date if provided, then the
+	// start date, then the priority and task name.
+
+	for i := len(c.Args) - 1; i >= 0; i-- {
+		arg := c.Args[i]
+
+		switch {
+		case t.Delay == nil: // process delay[,delay]
+			for _, delaystr := range strings.Split(arg, ",") {
+				// If the delay can be parsed, append it to the
+				// slice. If there not, report the error.
+				delay, err := time.ParseDuration(delaystr)
+				if err != nil {
+					return err
+				}
+				t.Delay = append(t.Delay, delay)
+			}
+
+		case t.End.IsZero() && t.Start.IsZero(): // process End
+			// If there aren't enough remaining arguments, give an
+			// error.
+			if i < 1 {
+				return errors.New("Could not parse arguments")
+			}
+			// Otherwise, construct a timestr and move the iterator.
+			timestr := c.Args[i-1] + " " + arg
+			i -= 1
+
+			// Interpret the set as the End. If parsing the Start
+			// fails, then this will be used as the Start instead and
+			// the End will be zeroed.
+			t.End, err = time.ParseInLocation(FullFormat,
+				timestr, time.Local)
+			if err != nil {
+				return err
+			}
+
+		case t.Start.IsZero(): // process Start
+			// If there aren't enough remaining arguments, give an
+			// error.
+			if i < 1 {
+				return errors.New("Could not parse arguments")
+			}
+			// Otherwise construct a timestr, but wait on moving the
+			// iterator until this parses successfully as a time.
+			timestr := c.Args[i-1] + " " + arg
+
+			// Try to parse it.
+			t.Start, err = time.ParseInLocation(FullFormat,
+				timestr, time.Local)
+			if err != nil {
+				// If there is an error, use the End instead, if that
+				// exists, and prevent i from being decremented by
+				// this pass.
+				if !t.End.IsZero() {
+					t.Start = t.End
+					t.End = time.Time{}
+					i += 1
+				} else {
+					return err
+				}
+			} else {
+				// Otherwise, use the newly parsed time and decrement
+				// i appropriately.
+				i -= 1
+			}
+
+		case t.Spawn.Priority == 0: // process Spawn Priority
+			// Try to process the priority. If we've gotten to this
+			// point, and it doesn't work, then it is a fatal error.
+			t.Spawn.Priority, err = strconv.Atoi(arg)
+			if err != nil {
+				return
+			}
+
+		default: // process Spawn Name
+			// If all other conditions have been satisfied, add it to
+			// the name (in reverse order.)
+			t.Spawn.Name = arg + " " + t.Spawn.Name
+		}
+	}
+
+	// Append the task to the appropriate fileList field and mark it
+	// as modified.
+	ctx.fileList.Recurring = append(ctx.fileList.Recurring, t)
+	ctx.modified = true
+
 	return nil
 }
 

@@ -66,6 +66,34 @@ which can be an unquoted string containing any characters. The
 positive integers are sorted first.
 .RE
 .PP
+.BR recurring ,\  r
+\fItaskname\fR \fIpriority\fR \fIstart\fR [\fIend\fR]
+\fIdelay\fR[,\fI...\fR]
+.RS 4
+adds a recurring task to the task list, which generates a task at
+every cycle of the given \fIdelay\fR, including the \fIstart\fR
+time. Multiple delays can be specified, in the format
+\fB24h,12h,8h30m\fR. Note that \fBh\fR is the largest unit of time
+that can be used.
+.PP
+The \fIstart\fR and \fIend\fR times are specified in ISO 8601 date
+format with a normal 24-hour time following, such as: \fB2006-01-02
+15:04\fR. If not supplied, there will be no end date and the tasks
+will continue generating infinitely.
+.PP
+The \fItaskname\fR and \fIpriority\fR will be given to each spawned
+task and listed along with normal definite and eventual tasks. The
+only difference is that the \fItaskname\fR is
+.BR printf (1)-formatted
+with the current task ID when printed. Thus, the first instance of a
+recurring task with the \fItaskname\fR "Homework %d" will be shown as
+"Homework 1", and so on.
+.PP
+Individual spawned tasks can be dismissed normally (see \fBdone\fR
+below), and when all instances of the task are marked complete, then
+the task itself will be removed from the on-filesystem task list.
+.RE
+.PP
 .BR done ,\  d
 \fItaskname\fR
 .RS 4
