@@ -328,10 +328,10 @@ type RecurringTask struct {
 	parent *RecurringTaskGenerator
 
 	// Occurrence is the 1-indexed occurrence number of this task.
-	Occurrence int
+	Occurrence int `json:"-"`
 
 	Priority          int
-	DueBy             time.Time
+	DueBy             time.Time `json:"-"`
 	Name, Description string
 }
 
