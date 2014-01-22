@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	Version = "0.3.1"
+	Version = "0.4.0"
 
 	// Ctx is the global context.
 	Ctx *Context
