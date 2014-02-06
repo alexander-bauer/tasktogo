@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"github.com/SashaCrofter/reltime"
-	"math"
 	"strings"
 	"time"
 )
@@ -40,7 +39,7 @@ type TaskContainer interface {
 const (
 	// EventualFactor is the amount of time by which the priorities on
 	// eventual tasks are multiplied.
-	EventualFactor = float64(time.Hour * 72)
+	EventualFactor = time.Duration(time.Hour*168) / time.Second
 
 	// EventualThreshold is the about by which a priority value must
 	// be increased in order for it to be colorized differently.
@@ -61,13 +60,11 @@ func (t *DefiniteTask) Tasks() []Task {
 // Nice calculates the numerical nice value for a DefiniteTask, so
 // that it can be sorted easily. The formula is
 //
-//     log(priority) * (due - now)
+//     priority * secondsin(due - now)
 //
 // where timestamps are UNIX dates.
 func (t *DefiniteTask) Nice() int {
-	return int(
-		math.Log(float64(t.Priority)) *
-			float64(t.DueBy.Sub(time.Now())))
+	return t.Priority * int(t.DueBy.Sub(time.Now())/time.Second)
 }
 
 // Match checks whether the given search term matches the task's title
@@ -121,7 +118,7 @@ func (t *EventualTask) Tasks() []Task {
 }
 
 func (t *EventualTask) Nice() int {
-	return int(math.Log(float64(t.Priority)) * EventualFactor)
+	return t.Priority * int(EventualFactor)
 }
 
 func (t *EventualTask) Match(term string) bool {
@@ -336,9 +333,7 @@ type RecurringTask struct {
 }
 
 func (t *RecurringTask) Nice() int {
-	return int(
-		math.Log(float64(t.Priority)) *
-			float64(t.DueBy.Sub(time.Now())))
+	return t.Priority * int(t.DueBy.Sub(time.Now())/time.Second)
 }
 
 // Match checks whether the given search term matches the task's title
@@ -353,8 +348,8 @@ func (t *RecurringTask) String() string {
 	// Ctx.Colors is not set, then it will do nothing.
 	col := BrushConditionally(Ctx, ColorForDate(t.DueBy, ColorThreshold))
 
-	return fmt.Sprintf(col("(%d) %s - %s\n"),
-		t.Priority, reltime.FormatRelative(RelFmt, DueFmt, t.DueBy), t.Name)
+	return fmt.Sprintf(col("(%d) %s - %s\n"), t.Priority,
+		reltime.FormatRelative(RelFmt, DueFmt, t.DueBy), t.Name)
 }
 
 func (t *RecurringTask) LongString() string {
