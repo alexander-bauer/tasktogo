@@ -24,11 +24,14 @@ man: doc/tasktogo.1
 	gzip -c doc/tasktogo.1 > man/tasktogo.1.gz
 
 install: all
-	test -d $(prefix)/bin || mkdir -p $(prefix)/bin
-	test -d $(prefix)/share/man/man1 || mkdir -p $(prefix)/share/man/man1
-	install -m 0755 $(PROGRAM_NAME) $(prefix)/bin
-	install -m 0644 man/tasktogo.1.gz $(prefix)/share/man/man1
+	install -D -m 0755 $(PROGRAM_NAME) $(prefix)/bin/$(PROGRAM_NAME)
+	install -D -m 0644 man/tasktogo.1.gz \
+$(prefix)/share/man/man1/$(PROGRAM_NAME).1.gz
+	install -D -m 0644 LICENSE \
+$(prefix)/share/licenses/$(PROGRAM_NAME)/LICENSE
 
 clean:
 	- rm -rf $(PROGRAM_NAME)
 	- rm -rf man
+
+# vim: set noexpandtab:
