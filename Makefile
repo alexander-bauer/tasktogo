@@ -16,7 +16,7 @@ endif
 all: $(PROGRAM_NAME) man
 
 $(PROGRAM_NAME): $(wildcard *.go)
-	$(GOCOMPILER)
+	$(GOCOMPILER) -o $(PROGRAM_NAME)
 
 # Compile man page sources in `doc` to `man`.
 man: doc/tasktogo.1
